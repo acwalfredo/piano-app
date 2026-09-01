@@ -7,3 +7,5 @@
 ![高音譜號視譜練習](screenshot1.png)
 
 ![低音譜號視譜練習](screenshot2.png)
+
+![拍子練習](screenshot3.png)
