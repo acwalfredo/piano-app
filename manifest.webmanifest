@@ -1,0 +1,24 @@
+{
+  "name": "幼兒鋼琴視譜樂園",
+  "short_name": "鋼琴樂園",
+  "description": "專為4歲寶寶設計的標準鋼琴左右手視譜與拍子練習 App",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#FFFDF9",
+  "theme_color": "#F59E0B",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
