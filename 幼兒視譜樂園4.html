@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- iOS / Safari 全螢幕 App 設定 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="鋼琴樂園">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/f59e0b/ffffff?text=🎹">
+
+    <!-- Web App Manifest (內嵌式 Data URI，免額外硬碟檔案) -->
+    <link rel="manifest" href='data:application/manifest+json,{"name":"4歲幼兒鋼琴左右手視譜與拍子樂園","short_name":"鋼琴樂園","start_url":".","display":"standalone","orientation":"landscape","background_color":"#FFFDF9","theme_color":"#f59e0b","icons":[{"src":"https://placehold.co/192x192/f59e0b/ffffff?text=🎹","sizes":"192x192","type":"image/png"}]}'>
+
+    <title>4歲幼兒鋼琴左右手視譜與拍子樂園</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', 'Fredoka', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            background-color: #FFFDF9;
+        }
+        .white-key-active {
+            background-color: #FEF08A !important;
+            transform: translateY(3px);
+            box-shadow: inset 0 3px 5px rgba(0,0,0,0.2) !important;
+        }
+        .black-key-active {
+            background-color: #475569 !important;
+            transform: translateY(3px) scale(0.98);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5) !important;
+        }
+        .beat-flash {
+            animation: flashLight 0.15s ease-out;
+        }
+        @keyframes flashLight {
+            0% { background-color: #EF4444; transform: scale(1.2); }
+            100% { background-color: #22C55E; transform: scale(1); }
+        }
+        /* 自訂鋼琴滾動條 */
+        .piano-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+        .piano-scroll::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        .piano-scroll::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between p-2 sm:p-4 overflow-x-hidden">
+
+    <!-- 頂部導航列：標題、星星、節拍器控制與輔助切換 -->
+    <header class="max-w-6xl mx-auto w-full bg-white/95 backdrop-blur-md rounded-3xl p-3 sm:p-4 shadow-lg border-4 border-amber-200 mb-2 flex flex-wrap justify-between items-center gap-3">
+        <div class="flex items-center space-x-2">
+            <span class="text-3xl sm:text-4xl">🎹</span>
+            <div>
+                <h1 class="text-lg sm:text-2xl font-black text-amber-600 leading-tight">幼兒鋼琴視譜樂園</h1>
+                <p class="text-xs text-amber-500 font-bold hidden sm:block">擴充音域 F2 - G5 ｜ 高音譜號精細化 ｜ 節拍器與黑鍵升降音</p>
+            </div>
+        </div>
+
+        <!-- 節拍器快捷開關 (預設 60 BPM) -->
+        <div class="flex items-center bg-orange-50 border-2 border-orange-200 rounded-2xl px-3 py-1.5 gap-2 shadow-sm">
+            <button id="metronomeBtn" onclick="toggleMetronome()" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl transition flex items-center gap-1 shadow">
+                <span id="metroIcon">⏱️</span>
+                <span id="metroText">節拍器：關</span>
+            </button>
+            <div class="flex items-center gap-1 text-xs font-bold text-amber-800">
+                <span id="metroBpmDisplay">60</span><span class="text-[10px]">BPM</span>
+                <button onclick="adjustBpm(-10)" class="w-6 h-6 bg-amber-200 hover:bg-amber-300 rounded-full font-black text-amber-800 flex items-center justify-center">-</button>
+                <button onclick="adjustBpm(10)" class="w-6 h-6 bg-amber-200 hover:bg-amber-300 rounded-full font-black text-amber-800 flex items-center justify-center">+</button>
+            </div>
+            <div id="metroIndicator" class="w-3.5 h-3.5 rounded-full bg-slate-300 transition-colors"></div>
+        </div>
+
+        <!-- 獎勵星星數與輔助開關 -->
+        <div class="flex items-center gap-2">
+            <!-- 一鍵安裝 App 按鈕 (常駐顯示並具備智能引導) -->
+            <button id="installPwaBtn" onclick="installPWA()" class="px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white rounded-2xl text-xs font-bold transition flex items-center gap-1 shadow animate-pulse cursor-pointer">
+                <span>📲</span> <span>安裝 App</span>
+            </button>
+
+            <div class="flex items-center bg-amber-100 px-3 py-1.5 rounded-full border-2 border-amber-300">
+                <span class="text-xl mr-1">⭐</span>
+                <span id="starCount" class="text-lg sm:text-xl font-black text-amber-600">0</span>
+            </div>
+            <!-- 升降音練習開關 -->
+            <button id="toggleAccidentalBtn" onclick="toggleAccidentals()" class="px-2.5 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 border-2 border-blue-300 rounded-2xl text-xs font-bold transition flex items-center gap-1 shadow-sm">
+                <span>♯♭</span> <span id="accidentalText">升降音：關</span>
+            </button>
+            <!-- 唱名開關 -->
+            <button onclick="toggleHelper()" class="px-2.5 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 border-2 border-purple-300 rounded-2xl text-xs font-bold transition flex items-center gap-1 shadow-sm">
+                <span id="helperIcon">💡</span> <span id="helperText">唱名：開</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 模式選擇分頁頁籤 -->
+    <div class="max-w-6xl mx-auto w-full grid grid-cols-4 gap-1.5 sm:gap-3 mb-2">
+        <button id="btnRH" onclick="switchMode('RH')" class="mode-btn py-2 px-1 sm:px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 transition-all bg-rose-500 hover:bg-rose-600 text-white border-rose-700 shadow-md flex flex-col sm:flex-row items-center justify-center gap-1">
+            <span class="text-lg sm:text-xl">✋</span> 
+            <span>右手高音</span>
+        </button>
+        <button id="btnLH" onclick="switchMode('LH')" class="mode-btn py-2 px-1 sm:px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 transition-all bg-sky-100 text-sky-800 border-sky-300 hover:bg-sky-200 flex flex-col sm:flex-row items-center justify-center gap-1">
+            <span class="text-lg sm:text-xl">🤚</span> 
+            <span>左手低音</span>
+        </button>
+        <button id="btnRhythm" onclick="switchMode('Rhythm')" class="mode-btn py-2 px-1 sm:px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 transition-all bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200 flex flex-col sm:flex-row items-center justify-center gap-1">
+            <span class="text-lg sm:text-xl">🥁</span> 
+            <span>拍子樂園</span>
+        </button>
+        <button id="btnFree" onclick="switchMode('Free')" class="mode-btn py-2 px-1 sm:px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 transition-all bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200 flex flex-col sm:flex-row items-center justify-center gap-1">
+            <span class="text-lg sm:text-xl">🎶</span> 
+            <span>自由彈奏</span>
+        </button>
+    </div>
+
+    <!-- 主要互動區域 -->
+    <main class="max-w-6xl mx-auto w-full flex-1 flex flex-col justify-around items-center my-1 gap-2">
+
+        <!-- 吉祥物說話框 -->
+        <div class="w-full flex items-center justify-center gap-3 bg-white/80 p-2 sm:p-2.5 rounded-2xl border-2 border-orange-100 shadow-sm">
+            <div id="mascotAvatar" class="text-3xl sm:text-4xl">🐰</div>
+            <div class="bg-amber-50 border border-amber-200 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-bold text-slate-700 shadow-inner max-w-lg">
+                <span id="mascotText">歡迎來到音樂樂園！看五線譜，找出正確的琴鍵吧！</span>
+            </div>
+        </div>
+
+        <!-- 視譜模式容器 (標準穩定五線譜) -->
+        <div id="sightReadingStage" class="w-full bg-white rounded-3xl p-3 sm:p-4 shadow-xl border-4 border-amber-200 flex flex-col items-center justify-center relative min-h-[220px]">
+            <!-- 精細化標準五線譜 SVG 繪製區域 -->
+            <div class="w-full max-w-xl flex justify-center items-center relative py-1">
+                <svg id="staffSVG" class="w-full h-48 sm:h-56" viewBox="0 0 360 170">
+                    <!-- 五線譜與極精細高低音譜號由 JS 動態繪製 -->
+                </svg>
+            </div>
+
+            <!-- 音符與譜號知識提示 -->
+            <div id="noteHintBadge" class="mt-1 px-4 py-1.5 bg-rose-100 text-rose-800 text-xs sm:text-sm font-black rounded-full border border-rose-300 flex items-center gap-2">
+                <span>🎼 右手高音譜號：圓圈中心圍繞「第 2 線 (G4 / Sol)」</span>
+            </div>
+        </div>
+
+        <!-- 拍子模式容器 -->
+        <div id="rhythmStage" class="w-full bg-white rounded-3xl p-4 sm:p-6 shadow-xl border-4 border-amber-200 hidden flex-col items-center justify-center space-y-3">
+            <div class="text-center space-y-1">
+                <h3 id="rhythmTitle" class="text-xl sm:text-2xl font-black text-amber-600">認識拍子：四分音符 (1拍)</h3>
+                <p id="rhythmDesc" class="text-xs sm:text-sm font-bold text-slate-500">聽著節拍器聲音「嗒」，準確點擊鼓面！</p>
+            </div>
+
+            <!-- 音符與拍子展示卡片 -->
+            <div class="flex items-center justify-center gap-5 my-1">
+                <div class="w-24 h-24 sm:w-28 sm:h-28 bg-amber-50 rounded-2xl border-4 border-amber-300 flex flex-col items-center justify-center shadow-inner">
+                    <span id="rhythmNoteSymbol" class="text-5xl sm:text-6xl text-slate-800">♩</span>
+                    <span id="rhythmBeatText" class="text-xs sm:text-sm font-black text-amber-700 mt-1">1 拍</span>
+                </div>
+                <div class="text-2xl sm:text-3xl text-amber-400 font-black">＝</div>
+                <div id="rhythmClapIcons" class="flex gap-2 text-2xl sm:text-3xl">
+                    <span>👏</span>
+                </div>
+            </div>
+
+            <!-- 拍子太鼓按鈕 -->
+            <button id="drumBtn" onclick="handleDrumTap()" class="w-28 h-28 sm:w-32 sm:h-32 bg-gradient-to-b from-red-400 to-red-600 hover:from-red-500 hover:to-red-700 active:scale-95 text-white font-black rounded-full border-6 sm:border-8 border-yellow-300 shadow-xl flex flex-col items-center justify-center transition-all">
+                <span class="text-3xl sm:text-4xl mb-1">🥁</span>
+                <span class="text-sm sm:text-base">打拍子</span>
+            </button>
+            <div id="rhythmFeedback" class="h-6 font-black text-amber-600 text-sm sm:text-base">跟隨 60 BPM 節拍器點擊鼓面！</div>
+        </div>
+
+    </main>
+
+    <!-- 底部大琴鍵區 (擴充全音域 F2 - G5：共 23 個白鍵 + 16 個黑鍵) -->
+    <footer class="max-w-6xl mx-auto w-full bg-slate-800 p-2 sm:p-3 rounded-3xl shadow-2xl border-4 border-slate-700 mt-2">
+        <div class="flex justify-between items-center mb-1.5 px-2 text-white">
+            <div class="text-xs sm:text-sm font-bold text-amber-300 flex items-center gap-1 overflow-x-auto">
+                <span>🎹 琴鍵音域：</span>
+                <span id="keyboardLabel">左手 [a, s, d, f, g] ｜ 右手 [h, j, k, l, ;, ', b, n, m, ,, ., /] (直接按鍵，免按 Shift！h = 中央 C4)</span>
+            </div>
+            <div class="text-xs text-slate-400 font-bold hidden md:block">支援電腦單鍵直按</div>
+        </div>
+
+        <!-- 鋼琴琴鍵容器 (支援橫向滑動與自動適應) -->
+        <div class="relative w-full h-44 sm:h-52 bg-slate-900 rounded-2xl p-2 border-2 border-slate-700 select-none overflow-x-auto piano-scroll">
+            <div id="pianoWrapper" class="relative min-w-[900px] w-full h-full flex">
+                <!-- 由 JavaScript 動態計算並佈局白鍵與覆蓋黑鍵 -->
+            </div>
+        </div>
+    </footer>
+
+    <!-- 通關慶祝彈窗 -->
+    <div id="celebrationModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full text-center border-4 border-amber-400 shadow-2xl transform transition-all scale-100 space-y-4">
+            <div class="text-6xl">🎉</div>
+            <h2 class="text-2xl sm:text-3xl font-black text-amber-600">太棒了！太厲害了！</h2>
+            <p class="text-slate-600 font-bold">你已經順利獲得 <span id="modalStarCount" class="text-amber-500 font-black text-xl">5</span> 顆星星囉！</p>
+            <div class="py-2">
+                <span class="text-5xl">🏆🌟👑</span>
+            </div>
+            <button onclick="closeCelebration()" class="w-full py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-black text-lg rounded-2xl shadow-lg border-b-4 border-orange-700 transition">
+                繼續玩樂園！
+            </button>
+        </div>
+    </div>
+
+    <!-- PWA 手動安裝教學彈窗 (當前環境無法直接觸發 prompt 時自動顯示) -->
+    <div id="pwaGuideModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 select-none">
+        <div class="bg-white rounded-3xl p-5 max-w-md w-full border-4 border-emerald-400 shadow-2xl space-y-3 text-left">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="text-base sm:text-lg font-black text-emerald-700 flex items-center gap-1">📲 如何安裝成手機 / 電腦 App</h3>
+                <button onclick="closePwaGuide()" class="text-slate-400 font-bold text-xl hover:text-slate-600 px-2">✕</button>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-700 space-y-2">
+                <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                    <p class="font-bold text-amber-800 mb-0.5">💡 為什麼沒有直接彈出安裝提示？</p>
+                    <p class="text-[11px] text-amber-700 leading-relaxed">瀏覽器有安全限制：當前處於**預覽視窗 (iframe)** 中，Chrome 會自動封鎖強行彈窗。您可以透過以下步驟隨時手動安裝：</p>
+                </div>
+                
+                <div class="space-y-1.5">
+                    <div class="p-2 bg-slate-50 rounded-xl border border-slate-200">
+                        <p class="font-bold text-emerald-800 text-xs">📱 Android (Google Chrome)：</p>
+                        <p class="text-[11px] text-slate-600 mt-0.5">點擊右上角 <span class="font-bold bg-slate-200 px-1 rounded text-slate-800">⋮</span> 三點選單 ➜ 選擇 **「安裝應用程式」** 或 **「加到主螢幕」**。</p>
+                    </div>
+                    <div class="p-2 bg-slate-50 rounded-xl border border-slate-200">
+                        <p class="font-bold text-blue-800 text-xs">🍎 iPhone / iPad (Safari)：</p>
+                        <p class="text-[11px] text-slate-600 mt-0.5">點擊下方 <span class="font-bold bg-slate-200 px-1 rounded text-slate-800">⎋</span> 分享按鈕 ➜ 向下滑動選擇 **「加入主畫面」**。</p>
+                    </div>
+                    <div class="p-2 bg-slate-50 rounded-xl border border-slate-200">
+                        <p class="font-bold text-purple-800 text-xs">💻 電腦版 Chrome / Edge：</p>
+                        <p class="text-[11px] text-slate-600 mt-0.5">點擊網址列右側 <span class="font-bold bg-slate-200 px-1 rounded text-slate-800">⊕</span> 圖示，或右上角選單 ➜ **「將網頁當作 App 安裝」**。</p>
+                    </div>
+                </div>
+            </div>
+            <button onclick="closePwaGuide()" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm rounded-xl shadow transition">
+                我知道了，開始練習！
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /*
+         * 完整擴充樂理座標系統（SVG viewBox: 0 0 360 170）
+         * 五線譜（由下至上）：
+         * Line 5 (最頂線) Y = 40
+         * Line 4          Y = 56
+         * Line 3 (中線)   Y = 72
+         * Line 2          Y = 88  (高音譜號 G4 中心線)
+         * Line 1 (最底線) Y = 104
+         */
+
+        // 題目與音符資料庫 (新增 F2-B2 低音區 與 C5-G5 超高音區)
+        const NOTES_DATA = {
+            RH_BASIC: [
+                { id: 'C4', name: 'C', solfège: 'Do', pitch: 'C4', hand: 'RH', y: 120, isLedger: true, stemUp: true, freq: 261.63, color: '#E11D48', noteDesc: '下加一線 (中央 C)', accidental: null },
+                { id: 'D4', name: 'D', solfège: 'Re', pitch: 'D4', hand: 'RH', y: 112, isLedger: false, stemUp: true, freq: 293.66, color: '#EA580C', noteDesc: '下加一間 (第1線正下方)', accidental: null },
+                { id: 'E4', name: 'E', solfège: 'Mi', pitch: 'E4', hand: 'RH', y: 104, isLedger: false, stemUp: true, freq: 329.63, color: '#D97706', noteDesc: '第 1 線 (最底線)', accidental: null },
+                { id: 'F4', name: 'F', solfège: 'Fa', pitch: 'F4', hand: 'RH', y: 96, isLedger: false, stemUp: true, freq: 349.23, color: '#16A34A', noteDesc: '第 1 間', accidental: null },
+                { id: 'G4', name: 'G', solfège: 'Sol', pitch: 'G4', hand: 'RH', y: 88, isLedger: false, stemUp: true, freq: 392.00, color: '#0284C7', noteDesc: '第 2 線 (高音譜號中心)', accidental: null },
+                { id: 'A4', name: 'A', solfège: 'La', pitch: 'A4', hand: 'RH', y: 80, isLedger: false, stemUp: true, freq: 440.00, color: '#0D9488', noteDesc: '第 2 間', accidental: null },
+                { id: 'B4', name: 'B', solfège: 'Ti', pitch: 'B4', hand: 'RH', y: 72, isLedger: false, stemUp: false, freq: 493.88, color: '#6D28D9', noteDesc: '第 3 線 (中線)', accidental: null },
+                { id: 'C5', name: 'C', solfège: '高音 Do', pitch: 'C5', hand: 'RH', y: 64, isLedger: false, stemUp: false, freq: 523.25, color: '#E11D48', noteDesc: '第 3 間', accidental: null },
+                { id: 'D5', name: 'D', solfège: '高音 Re', pitch: 'D5', hand: 'RH', y: 56, isLedger: false, stemUp: false, freq: 587.33, color: '#EA580C', noteDesc: '第 4 線', accidental: null },
+                { id: 'E5', name: 'E', solfège: '高音 Mi', pitch: 'E5', hand: 'RH', y: 48, isLedger: false, stemUp: false, freq: 659.25, color: '#D97706', noteDesc: '第 4 間', accidental: null },
+                { id: 'F5', name: 'F', solfège: '高音 Fa', pitch: 'F5', hand: 'RH', y: 40, isLedger: false, stemUp: false, freq: 698.46, color: '#16A34A', noteDesc: '第 5 線 (最頂線)', accidental: null },
+                { id: 'G5', name: 'G', solfège: '高音 Sol', pitch: 'G5', hand: 'RH', y: 32, isLedger: false, stemUp: false, freq: 783.99, color: '#0284C7', noteDesc: '上加一間', accidental: null }
+            ],
+            RH_ACCIDENTALS: [
+                { id: 'Cs4', name: 'C#', solfège: '升 Do', pitch: 'C#4', hand: 'RH', y: 120, isLedger: true, stemUp: true, freq: 277.18, color: '#9333EA', noteDesc: '升 C (黑鍵)', accidental: '♯' },
+                { id: 'Ds4', name: 'D#', solfège: '升 Re', pitch: 'D#4', hand: 'RH', y: 112, isLedger: false, stemUp: true, freq: 311.13, color: '#9333EA', noteDesc: '升 D (黑鍵)', accidental: '♯' },
+                { id: 'Fs4', name: 'F#', solfège: '升 Fa', pitch: 'F#4', hand: 'RH', y: 96, isLedger: false, stemUp: true, freq: 369.99, color: '#9333EA', noteDesc: '升 F (黑鍵)', accidental: '♯' },
+                { id: 'Gs4', name: 'G#', solfège: '升 Sol', pitch: 'G#4', hand: 'RH', y: 88, isLedger: false, stemUp: true, freq: 415.30, color: '#9333EA', noteDesc: '升 G (黑鍵)', accidental: '♯' },
+                { id: 'Bb4', name: 'Bb', solfège: '降 Ti', pitch: 'A#4', hand: 'RH', y: 72, isLedger: false, stemUp: false, freq: 466.16, color: '#9333EA', noteDesc: '降 B (黑鍵)', accidental: '♭' },
+                { id: 'Cs5', name: 'C#', solfège: '高音 升 Do', pitch: 'C#5', hand: 'RH', y: 64, isLedger: false, stemUp: false, freq: 554.37, color: '#9333EA', noteDesc: '高音 升 C (黑鍵)', accidental: '♯' },
+                { id: 'Ds5', name: 'D#', solfège: '高音 升 Re', pitch: 'D#5', hand: 'RH', y: 56, isLedger: false, stemUp: false, freq: 622.25, color: '#9333EA', noteDesc: '高音 升 D (黑鍵)', accidental: '♯' },
+                { id: 'Fs5', name: 'F#', solfège: '高音 升 Fa', pitch: 'F#5', hand: 'RH', y: 40, isLedger: false, stemUp: false, freq: 739.99, color: '#9333EA', noteDesc: '高音 升 F (黑鍵)', accidental: '♯' }
+            ],
+            LH_BASIC: [
+                { id: 'F2', name: 'F', solfège: '低音 Fa', pitch: 'F2', hand: 'LH', y: 112, isLedger: false, stemUp: true, freq: 87.31, color: '#2563EB', noteDesc: '下加一間', accidental: null },
+                { id: 'G2', name: 'G', solfège: '低音 Sol', pitch: 'G2', hand: 'LH', y: 104, isLedger: false, stemUp: true, freq: 98.00, color: '#4F46E5', noteDesc: '第 1 線 (最底線)', accidental: null },
+                { id: 'A2', name: 'A', solfège: '低音 La', pitch: 'A2', hand: 'LH', y: 96, isLedger: false, stemUp: true, freq: 110.00, color: '#0D9488', noteDesc: '第 1 間', accidental: null },
+                { id: 'B2', name: 'B', solfège: '低音 Ti', pitch: 'B2', hand: 'LH', y: 88, isLedger: false, stemUp: true, freq: 123.47, color: '#6D28D9', noteDesc: '第 2 線', accidental: null },
+                { id: 'C3', name: 'C', solfège: 'Do', pitch: 'C3', hand: 'LH', y: 80, isLedger: false, stemUp: true, freq: 130.81, color: '#2563EB', noteDesc: '第 2 間 (低音 Do)', accidental: null },
+                { id: 'D3', name: 'D', solfège: 'Re', pitch: 'D3', hand: 'LH', y: 72, isLedger: false, stemUp: true, freq: 146.83, color: '#4F46E5', noteDesc: '第 3 線 (中線)', accidental: null },
+                { id: 'E3', name: 'E', solfège: 'Mi', pitch: 'E3', hand: 'LH', y: 64, isLedger: false, stemUp: false, freq: 164.81, color: '#7C3AED', noteDesc: '第 3 間', accidental: null },
+                { id: 'F3', name: 'F', solfège: 'Fa', pitch: 'F3', hand: 'LH', y: 56, isLedger: false, stemUp: false, freq: 174.61, color: '#DB2777', noteDesc: '第 4 線 (低音譜號夾線)', accidental: null },
+                { id: 'G3', name: 'G', solfège: 'Sol', pitch: 'G3', hand: 'LH', y: 48, isLedger: false, stemUp: false, freq: 196.00, color: '#DC2626', noteDesc: '第 4 間', accidental: null },
+                { id: 'A3', name: 'A', solfège: 'La', pitch: 'A3', hand: 'LH', y: 40, isLedger: false, stemUp: false, freq: 220.00, color: '#059669', noteDesc: '第 5 線 (最頂線)', accidental: null },
+                { id: 'B3', name: 'B', solfège: 'Ti', pitch: 'B3', hand: 'LH', y: 32, isLedger: false, stemUp: false, freq: 246.94, color: '#4338CA', noteDesc: '上加一間', accidental: null }
+            ],
+            LH_ACCIDENTALS: [
+                { id: 'Fs2', name: 'F#', solfège: '低音 升 Fa', pitch: 'F#2', hand: 'LH', y: 112, isLedger: false, stemUp: true, freq: 92.50, color: '#9333EA', noteDesc: '低音 升 F (黑鍵)', accidental: '♯' },
+                { id: 'Gs2', name: 'G#', solfège: '低音 升 Sol', pitch: 'G#2', hand: 'LH', y: 104, isLedger: false, stemUp: true, freq: 103.83, color: '#9333EA', noteDesc: '低音 升 G (黑鍵)', accidental: '♯' },
+                { id: 'Bb2', name: 'Bb', solfège: '低音 降 Ti', pitch: 'A#2', hand: 'LH', y: 96, isLedger: false, stemUp: true, freq: 116.54, color: '#9333EA', noteDesc: '低音 降 B (黑鍵)', accidental: '♭' },
+                { id: 'Cs3', name: 'C#', solfège: '升 Do', pitch: 'C#3', hand: 'LH', y: 80, isLedger: false, stemUp: true, freq: 138.59, color: '#9333EA', noteDesc: '低音 升 C (黑鍵)', accidental: '♯' },
+                { id: 'Ds3', name: 'D#', solfège: '升 Re', pitch: 'D#3', hand: 'LH', y: 72, isLedger: false, stemUp: true, freq: 155.56, color: '#9333EA', noteDesc: '低音 升 Re (黑鍵)', accidental: '♯' },
+                { id: 'Fs3', name: 'F#', solfège: '升 Fa', pitch: 'F#3', hand: 'LH', y: 56, isLedger: false, stemUp: false, freq: 185.00, color: '#9333EA', noteDesc: '低音 升 F (黑鍵)', accidental: '♯' },
+                { id: 'Gs3', name: 'G#', solfège: '升 Sol', pitch: 'G#3', hand: 'LH', y: 48, isLedger: false, stemUp: false, freq: 207.65, color: '#9333EA', noteDesc: '低音 升 G (黑鍵)', accidental: '♯' },
+                { id: 'Bb3', name: 'Bb', solfège: '降 Ti', pitch: 'A#3', hand: 'LH', y: 32, isLedger: false, stemUp: false, freq: 233.08, color: '#9333EA', noteDesc: '低音 降 B (黑鍵)', accidental: '♭' }
+            ]
+        };
+
+        // 全音域 (F2 至 G5) 自由彈奏對照表
+        const ALL_NOTES_MAP = {};
+        [...NOTES_DATA.RH_BASIC, ...NOTES_DATA.RH_ACCIDENTALS, ...NOTES_DATA.LH_BASIC, ...NOTES_DATA.LH_ACCIDENTALS].forEach(n => {
+            ALL_NOTES_MAP[n.pitch] = n;
+        });
+
+        // 拍子資料庫
+        const RHYTHM_DATA = [
+            { name: '四分音符', beat: 1, symbol: '♩', nameCn: '1 拍 (嗒)', desc: '跟著 60 BPM 節拍器點擊 1 次，唸「嗒」！', claps: ['👏'], targetTaps: 1 },
+            { name: '二分音符', beat: 2, symbol: '𝄩', nameCn: '2 拍 (嗒-啊)', desc: '聽著 2 聲節拍器點擊 2 次，唸「嗒-啊」！', claps: ['👏', '👏'], targetTaps: 2 },
+            { name: '全音符', beat: 4, symbol: '𝄮', nameCn: '4 拍 (嗒-啊-啊-啊)', desc: '聽著 4 聲節拍器點擊 4 次，連續穩定打 4 下！', claps: ['👏', '👏', '👏', '👏'], targetTaps: 4 }
+        ];
+
+        let currentMode = 'RH'; // 'RH', 'LH', 'Rhythm', 'Free'
+        let currentNote = null;
+        let currentRhythmIndex = 0;
+        let currentRhythmTapCount = 0;
+        let stars = 0;
+        let showHelper = true;
+        let includeAccidentals = false;
+
+        let bpm = 60;
+        let isMetronomeOn = false;
+        let metronomeTimer = null;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(freq, duration = 1.0) {
+            initAudio();
+            if (!audioCtx) return;
+
+            try {
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 0.02);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {
+                console.error("Audio error:", e);
+            }
+        }
+
+        function playMetronomeTick(isHigh = false) {
+            initAudio();
+            if (!audioCtx) return;
+
+            try {
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(isHigh ? 1200 : 800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.04);
+
+                gainNode.gain.setValueAtTime(0.7, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.04);
+
+                const ind = document.getElementById('metroIndicator');
+                if (ind) {
+                    ind.className = 'w-3.5 h-3.5 rounded-full bg-red-500 shadow-lg beat-flash';
+                    setTimeout(() => {
+                        ind.className = 'w-3.5 h-3.5 rounded-full bg-green-500';
+                    }, 120);
+                }
+            } catch(e) {
+                console.error("Metro tick error:", e);
+            }
+        }
+
+        function playDrumSound() {
+            initAudio();
+            if (!audioCtx) return;
+
+            try {
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.22);
+
+                gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.22);
+            } catch (e) {
+                console.error("Drum Error:", e);
+            }
+        }
+
+        function playSuccessSound() {
+            initAudio();
+            playTone(523.25, 0.2);
+            setTimeout(() => playTone(659.25, 0.35), 100);
+        }
+
+        function playWrongSound() {
+            initAudio();
+            playTone(220.00, 0.3);
+        }
+
+        function toggleMetronome() {
+            isMetronomeOn = !isMetronomeOn;
+            const btn = document.getElementById('metronomeBtn');
+            const text = document.getElementById('metroText');
+            const ind = document.getElementById('metroIndicator');
+
+            if (isMetronomeOn) {
+                btn.className = "px-3 py-1 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl transition flex items-center gap-1 shadow";
+                text.innerText = "節拍器：開";
+                ind.className = "w-3.5 h-3.5 rounded-full bg-green-500";
+                startMetronomeLoop();
+            } else {
+                btn.className = "px-3 py-1 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl transition flex items-center gap-1 shadow";
+                text.innerText = "節拍器：關";
+                ind.className = "w-3.5 h-3.5 rounded-full bg-slate-300";
+                stopMetronomeLoop();
+            }
+        }
+
+        function startMetronomeLoop() {
+            stopMetronomeLoop();
+            const intervalMs = (60 / bpm) * 1000;
+            playMetronomeTick(true);
+            metronomeTimer = setInterval(() => {
+                playMetronomeTick(false);
+            }, intervalMs);
+        }
+
+        function stopMetronomeLoop() {
+            if (metronomeTimer) {
+                clearInterval(metronomeTimer);
+                metronomeTimer = null;
+            }
+        }
+
+        function adjustBpm(delta) {
+            bpm = Math.max(40, Math.min(160, bpm + delta));
+            document.getElementById('metroBpmDisplay').innerText = bpm;
+            if (isMetronomeOn) {
+                startMetronomeLoop();
+            }
+        }
+
+        // 精細繪製標準五線譜與精緻高音/低音譜號
+        function drawStaff(note) {
+            const svg = document.getElementById('staffSVG');
+            if (!svg) return;
+
+            const isRH = note ? (note.hand === 'RH') : (currentMode !== 'LH');
+            const lineSpacing = 16;
+            const topY = 40; // Line 5
+
+            let html = '';
+
+            const staffLines = [
+                { num: 5, y: topY },
+                { num: 4, y: topY + lineSpacing },
+                { num: 3, y: topY + lineSpacing * 2 },
+                { num: 2, y: topY + lineSpacing * 3 },
+                { num: 1, y: topY + lineSpacing * 4 }
+            ];
+
+            staffLines.forEach((line) => {
+                html += `<line x1="25" y1="${line.y}" x2="335" y2="${line.y}" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>`;
+                html += `<text x="14" y="${line.y + 3.5}" fill="#94A3B8" font-size="9" font-weight="bold">${line.num}</text>`;
+            });
+
+            html += `<line x1="25" y1="${topY}" x2="25" y2="${topY + 64}" stroke="#475569" stroke-width="2.5"/>`;
+            html += `<line x1="335" y1="${topY}" x2="335" y2="${topY + 64}" stroke="#475569" stroke-width="2.5"/>`;
+
+            if (isRH) {
+                // 精緻雕琢的高音譜號 (Treble Clef / G Clef)：標準古典線條，螺旋對齊第2線 (Y=88)
+                html += `
+                    <g transform="translate(42, 88)" class="select-none pointer-events-none">
+                        <!-- 高音譜號標準幾何向量繪製 -->
+                        <path d="M 1,-64 C 1,-64 -2,-78 -10,-72 C -18,-66 -11,-50 1,-34 C 15,-18 19,6 -1,18 C -20,28 -26,8 -15,-6 C -6,-18 13,-14 13,0 C 13,14 -2,18 -9,11 C -14,6 -12,0 -6,-1 C -2,-2 3,2 2,7 C 1,12 -5,11 -7,8 C -9,5 -6,2 -3,2 C 1,2 3,12 -8,14 C -18,16 -20,-1 -11,-12 C -2,-23 15,-18 15,-1 C 15,18 -4,22 -17,13 C -28,5 -20,-16 -10,-28 L -1,-60 L -1,42 C -1,56 -12,56 -12,47 C -12,40 -4,40 -4,45 C -4,50 -9,52 -11,49 C -13,46 -10,43 -6,44" 
+                              fill="none" stroke="#E11D48" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+                        <!-- 高音譜號實心底圈與螺旋心點 -->
+                        <circle cx="-1" cy="0" r="3.2" fill="#E11D48" />
+                    </g>
+                `;
+            } else {
+                // 低音譜號 (Bass Clef / F Clef)：起筆圓點對齊第4線 (Y=56)
+                html += `
+                    <g class="select-none pointer-events-none">
+                        <circle cx="50" cy="56" r="5.5" fill="#0284C7" />
+                        <path d="M 50,56 C 50,38 76,36 76,56 C 76,74 62,88 48,100" 
+                              fill="none" stroke="#0284C7" stroke-width="4.5" stroke-linecap="round" />
+                        <circle cx="86" cy="48" r="3.4" fill="#0284C7" />
+                        <circle cx="86" cy="64" r="3.4" fill="#0284C7" />
+                    </g>
+                `;
+            }
+
+            if (note) {
+                const noteX = 210;
+                const noteY = note.y;
+                const noteColor = note.color || (isRH ? '#E11D48' : '#0284C7');
+
+                if (note.isLedger) {
+                    html += `<line x1="${noteX - 22}" y1="${noteY}" x2="${noteX + 22}" y2="${noteY}" stroke="#334155" stroke-width="2.5" stroke-linecap="round"/>`;
+                }
+
+                let accidentalHtml = '';
+                if (note.accidental === '♯') {
+                    accidentalHtml = `<text x="${noteX - 26}" y="${noteY + 7}" fill="${noteColor}" font-size="26" font-weight="900" font-family="sans-serif">♯</text>`;
+                } else if (note.accidental === '♭') {
+                    accidentalHtml = `<text x="${noteX - 25}" y="${noteY + 5}" fill="${noteColor}" font-size="26" font-weight="900" font-family="sans-serif">♭</text>`;
+                }
+
+                const stemLength = 40;
+                let stemHtml = '';
+                if (note.stemUp) {
+                    stemHtml = `<line x1="${noteX + 11}" y1="${noteY - 2}" x2="${noteX + 11}" y2="${noteY - stemLength}" stroke="${noteColor}" stroke-width="4" stroke-linecap="round"/>`;
+                } else {
+                    stemHtml = `<line x1="${noteX - 11}" y1="${noteY + 2}" x2="${noteX - 11}" y2="${noteY + stemLength}" stroke="${noteColor}" stroke-width="4" stroke-linecap="round"/>`;
+                }
+
+                html += `
+                    <g class="static-note">
+                        ${accidentalHtml}
+                        <ellipse cx="${noteX}" cy="${noteY}" rx="13" ry="9.5" fill="${noteColor}" transform="rotate(-20 ${noteX} ${noteY})" />
+                        ${stemHtml}
+                `;
+
+                if (showHelper) {
+                    html += `
+                        <text x="${noteX + 26}" y="${noteY + 6}" fill="${noteColor}" font-size="22" font-weight="900">${note.solfège}</text>
+                        <text x="${noteX + 26}" y="${noteY + 22}" fill="#64748B" font-size="11" font-weight="bold">${note.noteDesc}</text>
+                    `;
+                }
+
+                html += `</g>`;
+            }
+
+            svg.innerHTML = html;
+        }
+
+        // 擴充鋼琴結構 (F2 至 G5，共 23 白鍵 + 16 黑鍵)
+        // 擴充鋼琴結構 (F2 至 G5，共 23 白鍵 + 16 黑鍵，全面採用單鍵對應)
+        const FULL_PIANO_STRUCTURE = [
+            // F2 - B2 (低音擴充區)
+            { type: 'white', pitch: 'F2', solfège: 'Fa', hand: 'LH', isMiddleC: false, keyChar: '1' },
+            { type: 'black', pitch: 'F#2', solfège: '升Fa', hand: 'LH', whiteIndex: 0, keyChar: 'q' },
+            { type: 'white', pitch: 'G2', solfège: 'Sol', hand: 'LH', isMiddleC: false, keyChar: '2' },
+            { type: 'black', pitch: 'G#2', solfège: '升Sol', hand: 'LH', whiteIndex: 1, keyChar: 'w' },
+            { type: 'white', pitch: 'A2', solfège: 'La', hand: 'LH', isMiddleC: false, keyChar: '3' },
+            { type: 'black', pitch: 'A#2', solfège: '降Ti', hand: 'LH', whiteIndex: 2, keyChar: 'e' },
+            { type: 'white', pitch: 'B2', solfège: 'Ti', hand: 'LH', isMiddleC: false, keyChar: '4' },
+
+            // C3 - B3 (左手主區: asdfgzxc)
+            { type: 'white', pitch: 'C3', solfège: 'Do', hand: 'LH', isMiddleC: false, keyChar: 'a' },
+            { type: 'black', pitch: 'C#3', solfège: '升Do', hand: 'LH', whiteIndex: 4, keyChar: 'r' },
+            { type: 'white', pitch: 'D3', solfège: 'Re', hand: 'LH', isMiddleC: false, keyChar: 's' },
+            { type: 'black', pitch: 'D#3', solfège: '升Re', hand: 'LH', whiteIndex: 5, keyChar: 't' },
+            { type: 'white', pitch: 'E3', solfège: 'Mi', hand: 'LH', isMiddleC: false, keyChar: 'd' },
+            { type: 'white', pitch: 'F3', solfège: 'Fa', hand: 'LH', isMiddleC: false, keyChar: 'f' },
+            { type: 'black', pitch: 'F#3', solfège: '升Fa', hand: 'LH', whiteIndex: 7, keyChar: 'y' },
+            { type: 'white', pitch: 'G3', solfège: 'Sol', hand: 'LH', isMiddleC: false, keyChar: 'g' },
+            { type: 'black', pitch: 'G#3', solfège: '升Sol', hand: 'LH', whiteIndex: 8, keyChar: 'c' },
+            { type: 'white', pitch: 'A3', solfège: 'La', hand: 'LH', isMiddleC: false, keyChar: 'z' },
+            { type: 'black', pitch: 'A#3', solfège: '降Ti', hand: 'LH', whiteIndex: 9, keyChar: 'v' },
+            { type: 'white', pitch: 'B3', solfège: 'Ti', hand: 'LH', isMiddleC: false, keyChar: 'x' },
+
+            // C4 - B4 (右手高音主區: H = Middle C, hjkl;'b)
+            { type: 'white', pitch: 'C4', solfège: 'Do', hand: 'RH', isMiddleC: true, keyChar: 'h' },
+            { type: 'black', pitch: 'C#4', solfège: '升Do', hand: 'RH', whiteIndex: 11, keyChar: 'u' },
+            { type: 'white', pitch: 'D4', solfège: 'Re', hand: 'RH', isMiddleC: false, keyChar: 'j' },
+            { type: 'black', pitch: 'D#4', solfège: '升Re', hand: 'RH', whiteIndex: 12, keyChar: 'i' },
+            { type: 'white', pitch: 'E4', solfège: 'Mi', hand: 'RH', isMiddleC: false, keyChar: 'k' },
+            { type: 'white', pitch: 'F4', solfège: 'Fa', hand: 'RH', isMiddleC: false, keyChar: 'l' },
+            { type: 'black', pitch: 'F#4', solfège: '升Fa', hand: 'RH', whiteIndex: 14, keyChar: 'o' },
+            { type: 'white', pitch: 'G4', solfège: 'Sol', hand: 'RH', isMiddleC: false, keyChar: ';' },
+            { type: 'black', pitch: 'G#4', solfège: '升Sol', hand: 'RH', whiteIndex: 15, keyChar: 'p' },
+            { type: 'white', pitch: 'A4', solfège: 'La', hand: 'RH', isMiddleC: false, keyChar: '\'' },
+            { type: 'black', pitch: 'A#4', solfège: '降Ti', hand: 'RH', whiteIndex: 16, keyChar: '[' },
+            { type: 'white', pitch: 'B4', solfège: 'Ti', hand: 'RH', isMiddleC: false, keyChar: 'b' },
+
+            // C5 - G5 (高音擴充區: n,m,./)
+            { type: 'white', pitch: 'C5', solfège: 'Do', hand: 'RH', isMiddleC: false, keyChar: 'n' },
+            { type: 'black', pitch: 'C#5', solfège: '升Do', hand: 'RH', whiteIndex: 18, keyChar: '5' },
+            { type: 'white', pitch: 'D5', solfège: 'Re', hand: 'RH', isMiddleC: false, keyChar: 'm' },
+            { type: 'black', pitch: 'D#5', solfège: '升Re', hand: 'RH', whiteIndex: 19, keyChar: '6' },
+            { type: 'white', pitch: 'E5', solfège: 'Mi', hand: 'RH', isMiddleC: false, keyChar: ',' },
+            { type: 'white', pitch: 'F5', solfège: 'Fa', hand: 'RH', isMiddleC: false, keyChar: '.' },
+            { type: 'black', pitch: 'F#5', solfège: '升Fa', hand: 'RH', whiteIndex: 21, keyChar: '7' },
+            { type: 'white', pitch: 'G5', solfège: 'Sol', hand: 'RH', isMiddleC: false, keyChar: '/' }
+        ];
+
+        const KEY_CHAR_TO_PITCH = {};
+        FULL_PIANO_STRUCTURE.forEach(k => {
+            if (k.keyChar) {
+                KEY_CHAR_TO_PITCH[k.keyChar.toLowerCase()] = k.pitch;
+            }
+        });
+
+        // 符號與 Shift 鍵自動映射（確保不論是否按住 Shift 或 CapsLock，皆能直接出音）
+        const SHIFT_KEY_MAP = {
+            '!': '1', '@': '2', '#': '3', '$': '4', '%': '5', '^': '6', '&': '7',
+            ':': ';', '"': '\'', '<': ',', '>': '.', '?': '/', '{': '['
+        };
+
+        // 動態精確佈局白鍵與黑鍵 (23 個白鍵，均分 100% 寬度)
+        function renderPianoKeyboard() {
+            const wrapper = document.getElementById('pianoWrapper');
+            if (!wrapper) return;
+            wrapper.innerHTML = '';
+
+            const whiteKeys = FULL_PIANO_STRUCTURE.filter(k => k.type === 'white');
+            const blackKeys = FULL_PIANO_STRUCTURE.filter(k => k.type === 'black');
+
+            const totalWhite = whiteKeys.length; // 23
+            const whiteWidthPercent = 100 / totalWhite; // ~4.3478%
+
+            // 1. 渲染白鍵
+            const whiteContainer = document.createElement('div');
+            whiteContainer.className = 'w-full h-full flex z-10';
+
+            whiteKeys.forEach((keyData, idx) => {
+                const isRH = keyData.hand === 'RH';
+                const baseBorder = isRH ? 'border-t-6 sm:border-t-8 border-rose-400' : 'border-t-6 sm:border-t-8 border-sky-400';
+                const bg = keyData.isMiddleC ? 'bg-amber-100 ring-2 ring-amber-400' : 'bg-white';
+
+                const btn = document.createElement('button');
+                btn.style.width = `${whiteWidthPercent}%`;
+                btn.className = `piano-white-key h-full mx-[1px] ${bg} ${baseBorder} rounded-b-xl shadow-md border-b-4 border-slate-300 active:bg-amber-100 flex flex-col justify-end items-center pb-1 transition-all select-none`;
+                btn.dataset.pitch = keyData.pitch;
+
+                let label = `<span class="text-[10px] sm:text-xs font-black ${isRH ? 'text-rose-600' : 'text-sky-600'}">${keyData.solfège}</span>`;
+                if (showHelper) {
+                    label += `<span class="text-[8px] text-slate-400 font-bold">${keyData.pitch}</span>`;
+                }
+                if (keyData.isMiddleC) {
+                    label += `<span class="text-[7px] sm:text-[8px] bg-amber-300 text-amber-900 font-black px-0.5 rounded-full">中央C</span>`;
+                }
+                label += `<span class="mt-0.5 px-0.5 bg-slate-100 border border-slate-300 text-slate-700 font-black text-[8px] sm:text-[9px] rounded shadow-xs">${keyData.keyChar}</span>`;
+
+                btn.innerHTML = label;
+
+                const press = (e) => {
+                    e.preventDefault();
+                    btn.classList.add('white-key-active');
+                    setTimeout(() => btn.classList.remove('white-key-active'), 150);
+                    onPianoKeyPressed(keyData.pitch);
+                };
+
+                btn.addEventListener('mousedown', press);
+                btn.addEventListener('touchstart', press);
+
+                whiteContainer.appendChild(btn);
+            });
+
+            wrapper.appendChild(whiteContainer);
+
+            // 2. 動態精確計算黑鍵左側偏移量 (對齊白鍵縫隙)
+            blackKeys.forEach((keyData) => {
+                const isRH = keyData.hand === 'RH';
+                const blackBtn = document.createElement('button');
+                
+                // 黑鍵寬度約為白鍵寬度的 65%
+                const blackWidthPercent = whiteWidthPercent * 0.65; 
+                // 置於 whiteIndex 與 whiteIndex+1 之間
+                const leftPosPercent = ((keyData.whiteIndex + 1) * whiteWidthPercent) - (blackWidthPercent / 2);
+
+                blackBtn.style.left = `${leftPosPercent}%`;
+                blackBtn.style.width = `${blackWidthPercent}%`;
+                blackBtn.style.height = '60%';
+                blackBtn.className = `piano-black-key absolute top-0 z-20 bg-slate-900 hover:bg-slate-800 border-x border-b-4 border-slate-950 rounded-b-lg shadow-2xl flex flex-col justify-end items-center pb-0.5 text-white select-none transition-all`;
+                blackBtn.dataset.pitch = keyData.pitch;
+
+                let blackLabel = `<span class="text-[7px] sm:text-[8px] font-black ${isRH ? 'text-rose-300' : 'text-sky-300'}">${keyData.solfège}</span>`;
+                blackLabel += `<span class="text-[7px] bg-slate-700 text-amber-300 px-0.5 rounded font-bold">${keyData.keyChar}</span>`;
+                blackBtn.innerHTML = blackLabel;
+
+                const pressBlack = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    blackBtn.classList.add('black-key-active');
+                    setTimeout(() => blackBtn.classList.remove('black-key-active'), 150);
+                    onPianoKeyPressed(keyData.pitch);
+                };
+
+                blackBtn.addEventListener('mousedown', pressBlack);
+                blackBtn.addEventListener('touchstart', pressBlack);
+
+                wrapper.appendChild(blackBtn);
+            });
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            let key = e.key;
+            if (SHIFT_KEY_MAP[key]) {
+                key = SHIFT_KEY_MAP[key];
+            }
+            key = key.toLowerCase();
+            const pitch = KEY_CHAR_TO_PITCH[key];
+            if (pitch) {
+                e.preventDefault(); // 阻擋瀏覽器預設快捷鍵 (例如 / 或 ' 搜尋)
+                const btn = document.querySelector(`[data-pitch="${pitch}"]`);
+                if (btn) {
+                    if (btn.classList.contains('piano-white-key')) {
+                        btn.classList.add('white-key-active');
+                    } else {
+                        btn.classList.add('black-key-active');
+                    }
+                }
+                onPianoKeyPressed(pitch);
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            let key = e.key;
+            if (SHIFT_KEY_MAP[key]) {
+                key = SHIFT_KEY_MAP[key];
+            }
+            key = key.toLowerCase();
+            const pitch = KEY_CHAR_TO_PITCH[key];
+            if (pitch) {
+                const btn = document.querySelector(`[data-pitch="${pitch}"]`);
+                if (btn) {
+                    btn.classList.remove('white-key-active', 'black-key-active');
+                }
+            }
+        });
+
+        function onPianoKeyPressed(pitch) {
+            const noteObj = ALL_NOTES_MAP[pitch];
+            const freq = noteObj ? noteObj.freq : 261.63;
+            playTone(freq);
+
+            if (currentMode === 'RH' || currentMode === 'LH') {
+                if (currentNote && pitch === currentNote.pitch) {
+                    playSuccessSound();
+                    addStar();
+                    updateMascot(`太棒了！答對了，這是 ${currentNote.solfège} (${currentNote.noteDesc})！🎉`, "🐰");
+                    
+                    setTimeout(() => {
+                        generateNewQuestion();
+                    }, 800);
+                } else {
+                    playWrongSound();
+                    updateMascot(`再找找看喔！目標音符是：${currentNote.solfège} (${currentNote.noteDesc})！`, "🐻");
+                }
+            } else if (currentMode === 'Free') {
+                if (noteObj) {
+                    drawStaff(noteObj);
+                    const handText = noteObj.hand === 'RH' ? '高音譜號 (右手區)' : '低音譜號 (左手區)';
+                    updateMascot(`彈奏了 ${noteObj.solfège} (${noteObj.pitch}) 🎵 屬於${handText}`, "🎶");
+                    
+                    const noteBadge = document.getElementById('noteHintBadge');
+                    if (noteBadge) {
+                        const isRHNote = noteObj.hand === 'RH';
+                        noteBadge.innerHTML = isRHNote ? 
+                            `<span>🎼 高音譜號：${noteObj.solfège} (${noteObj.noteDesc})</span>` :
+                            `<span>𝄢 低音譜號：${noteObj.solfège} (${noteObj.noteDesc})</span>`;
+                        noteBadge.className = `mt-1 px-4 py-1.5 ${isRHNote ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-sky-100 text-sky-800 border-sky-300'} text-xs sm:text-sm font-black rounded-full border`;
+                    }
+                } else {
+                    updateMascot(`彈奏了 ${pitch} 🎵`, "🎵");
+                }
+            }
+        }
+
+        function generateNewQuestion() {
+            let pool = [];
+            if (currentMode === 'RH') {
+                pool = includeAccidentals ? [...NOTES_DATA.RH_BASIC, ...NOTES_DATA.RH_ACCIDENTALS] : NOTES_DATA.RH_BASIC;
+            } else {
+                pool = includeAccidentals ? [...NOTES_DATA.LH_BASIC, ...NOTES_DATA.LH_ACCIDENTALS] : NOTES_DATA.LH_BASIC;
+            }
+
+            let newNote;
+            do {
+                newNote = pool[Math.floor(Math.random() * pool.length)];
+            } while (pool.length > 1 && currentNote && newNote.pitch === currentNote.pitch);
+
+            currentNote = newNote;
+            drawStaff(currentNote);
+
+            const handName = currentMode === 'RH' ? '右手 (高音譜號)' : '左手 (低音譜號)';
+            updateMascot(`請看五線譜：這是 ${handName} 的哪一個音呢？`, currentMode === 'RH' ? "🐰" : "🐻");
+        }
+
+        function setupRhythmQuestion() {
+            const rhythm = RHYTHM_DATA[currentRhythmIndex];
+            currentRhythmTapCount = 0;
+
+            document.getElementById('rhythmTitle').innerText = `認識拍子：${rhythm.name}`;
+            document.getElementById('rhythmDesc').innerText = rhythm.desc;
+            document.getElementById('rhythmNoteSymbol').innerText = rhythm.symbol;
+            document.getElementById('rhythmBeatText').innerText = rhythm.nameCn;
+
+            const clapContainer = document.getElementById('rhythmClapIcons');
+            clapContainer.innerHTML = rhythm.claps.map(c => `<span>${c}</span>`).join('');
+
+            document.getElementById('rhythmFeedback').innerText = `聽著節拍器點擊 ${rhythm.targetTaps} 下！`;
+            updateMascot(`跟著節拍器打太鼓，感覺穩定節奏吧！`, "🥁");
+        }
+
+        function handleDrumTap() {
+            playDrumSound();
+            currentRhythmTapCount++;
+
+            const rhythm = RHYTHM_DATA[currentRhythmIndex];
+            const remaining = rhythm.targetTaps - currentRhythmTapCount;
+
+            if (remaining > 0) {
+                document.getElementById('rhythmFeedback').innerText = `好棒！再點擊 ${remaining} 下！`;
+            } else {
+                playSuccessSound();
+                addStar();
+                document.getElementById('rhythmFeedback').innerText = `太讚了！成功完成 ${rhythm.name}！🎉`;
+                
+                setTimeout(() => {
+                    currentRhythmIndex = (currentRhythmIndex + 1) % RHYTHM_DATA.length;
+                    setupRhythmQuestion();
+                }, 1200);
+            }
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+
+            const btnMap = { RH: 'btnRH', LH: 'btnLH', Rhythm: 'btnRhythm', Free: 'btnFree' };
+            Object.keys(btnMap).forEach(m => {
+                const btn = document.getElementById(btnMap[m]);
+                if (m === mode) {
+                    btn.className = btn.className.replace(/bg-\w+-100/g, '').replace(/text-\w+-800/g, '');
+                    if (m === 'RH') btn.className = "mode-btn py-2 px-1 sm:px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 transition-all bg-rose-500 hover:bg-rose-600 text-white border-rose-700 shadow-md flex flex-col sm:flex-row items-center justify-center gap-1";
+                    if (m === 'LH') btn.className = "mode-btn py-2 px-1 sm:px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 transition-all bg-sky-500 hover:bg-sky-600 text-white border-sky-700 shadow-md flex flex-col sm:flex-row items-center justify-center gap-1";
+                    if (m === 'Rhythm') btn.className = "mode-btn py-2 px-1 sm:px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 transition-all bg-amber-500 hover:bg-amber-600 text-white border-amber-700 shadow-md flex flex-col sm:flex-row items-center justify-center gap-1";
+                    if (m === 'Free') btn.className = "mode-btn py-2 px-1 sm:px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 transition-all bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-700 shadow-md flex flex-col sm:flex-row items-center justify-center gap-1";
+                } else {
+                    btn.className = `mode-btn py-2 px-1 sm:px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 transition-all opacity-80 hover:opacity-100 flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                        m === 'RH' ? 'bg-rose-100 text-rose-800 border-rose-300' :
+                        m === 'LH' ? 'bg-sky-100 text-sky-800 border-sky-300' :
+                        m === 'Rhythm' ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                        'bg-emerald-100 text-emerald-800 border-emerald-300'
+                    }`;
+                }
+            });
+
+            const sightStage = document.getElementById('sightReadingStage');
+            const rhythmStage = document.getElementById('rhythmStage');
+            const noteBadge = document.getElementById('noteHintBadge');
+            const kbLabel = document.getElementById('keyboardLabel');
+
+            if (mode === 'RH' || mode === 'LH') {
+                sightStage.classList.remove('hidden');
+                sightStage.classList.add('flex');
+                rhythmStage.classList.add('hidden');
+                rhythmStage.classList.remove('flex');
+
+                if (mode === 'RH') {
+                    noteBadge.innerHTML = "<span>🎼 右手高音譜號：圓圈中心圍繞「第 2 線 (G4 / Sol)」</span>";
+                    noteBadge.className = "mt-1 px-4 py-1.5 bg-rose-100 text-rose-800 text-xs sm:text-sm font-black rounded-full border border-rose-300";
+                    kbLabel.innerText = "右手 (C4-G5) ｜ 直接按鍵彈奏：[h, j, k, l, ;, ', b, n, m, ,, ., /] ( h = 中央 C4，免按 Shift)";
+                } else {
+                    noteBadge.innerHTML = "<span>𝄢 左手低音譜號：起筆大點與兩小點夾住「第 4 線 (F3 / Fa)」</span>";
+                    noteBadge.className = "mt-1 px-4 py-1.5 bg-sky-100 text-sky-800 text-xs sm:text-sm font-black rounded-full border border-sky-300";
+                    kbLabel.innerText = "左手 (F2-B3) ｜ 直接按鍵彈奏：[a, s, d, f, g, z, x, c, v, 1, 2, 3, 4] (免按 Shift)";
+                }
+
+                generateNewQuestion();
+            } else if (mode === 'Rhythm') {
+                sightStage.classList.add('hidden');
+                sightStage.classList.remove('flex');
+                rhythmStage.classList.remove('hidden');
+                rhythmStage.classList.add('flex');
+                kbLabel.innerText = "拍子模式：跟著上方節拍器打鼓！";
+                setupRhythmQuestion();
+            } else if (mode === 'Free') {
+                sightStage.classList.remove('hidden');
+                sightStage.classList.add('flex');
+                rhythmStage.classList.add('hidden');
+                rhythmStage.classList.remove('flex');
+
+                noteBadge.innerText = "自由彈奏模式：隨意點擊琴鍵，五線譜會即時顯示對應音符！";
+                noteBadge.className = "mt-1 px-4 py-1.5 bg-emerald-100 text-emerald-800 text-xs sm:text-sm font-black rounded-full border border-emerald-300";
+                kbLabel.innerText = "直接按鍵出音：左手 [a, s, d, f, g...] ｜ 右手 [h, j, k, l...]（免按 Shift 鍵）";
+
+                currentNote = null;
+                const defaultFreeNote = ALL_NOTES_MAP['C4'];
+                drawStaff(defaultFreeNote);
+                updateMascot("你想彈什麼樂曲呢？點擊任意琴鍵，五線譜會同步顯示音符位置喔！", "🐱");
+            }
+        }
+
+        function toggleAccidentals() {
+            includeAccidentals = !includeAccidentals;
+            const btn = document.getElementById('toggleAccidentalBtn');
+            const txt = document.getElementById('accidentalText');
+            if (includeAccidentals) {
+                btn.className = "px-2.5 py-1.5 bg-blue-500 text-white border-2 border-blue-600 rounded-2xl text-xs font-bold transition flex items-center gap-1 shadow";
+                txt.innerText = "升降音：開 (♯/♭)";
+            } else {
+                btn.className = "px-2.5 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 border-2 border-blue-300 rounded-2xl text-xs font-bold transition flex items-center gap-1 shadow-sm";
+                txt.innerText = "升降音：關";
+            }
+            if (currentMode === 'RH' || currentMode === 'LH') {
+                generateNewQuestion();
+            }
+        }
+
+        function toggleHelper() {
+            showHelper = !showHelper;
+            document.getElementById('helperText').innerText = `唱名：${showHelper ? '開' : '關'}`;
+            document.getElementById('helperIcon').innerText = showHelper ? '💡' : '🔒';
+            renderPianoKeyboard();
+            if (currentMode === 'RH' || currentMode === 'LH') {
+                drawStaff(currentNote);
+            }
+        }
+
+        function addStar() {
+            stars++;
+            document.getElementById('starCount').innerText = stars;
+            document.getElementById('modalStarCount').innerText = stars;
+
+            if (stars % 5 === 0) {
+                setTimeout(() => {
+                    triggerCelebration();
+                }, 300);
+            }
+        }
+
+        function updateMascot(text, avatar = "🐰") {
+            document.getElementById('mascotText').innerText = text;
+            document.getElementById('mascotAvatar').innerText = avatar;
+        }
+
+        function triggerCelebration() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+            document.getElementById('celebrationModal').classList.remove('hidden');
+        }
+
+        function closeCelebration() {
+            document.getElementById('celebrationModal').classList.hidden = true;
+        }
+
+        /* ----- PWA 安裝與智能引導邏輯 ----- */
+        let deferredPrompt = null;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User installed PWA');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                showPwaGuide();
+            }
+        }
+
+        function showPwaGuide() {
+            const modal = document.getElementById('pwaGuideModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closePwaGuide() {
+            const modal = document.getElementById('pwaGuideModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        // 嘗試動態註冊 Service Worker (強化獨立網域部署時的 PWA 支援)
+        if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+            try {
+                const swCode = "self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));";
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+            } catch (e) {}
+        }
+
+        window.onload = function() {
+            renderPianoKeyboard();
+            switchMode('RH');
+        };
+    </script>
+</body>
+</html>
