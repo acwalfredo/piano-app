@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-
-    <link rel="manifest" href="manifest.webmanifest">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
@@ -12,13 +10,14 @@
     <meta name="apple-mobile-web-app-title" content="鋼琴樂園">
     <link rel="apple-touch-icon" href="https://placehold.co/192x192/f59e0b/ffffff?text=🎹">
 
-    <!-- 內嵌式完全獨立 Web App Manifest (Data URI，符合 PWABuilder 與 PWA 標準規範) -->
+    <!-- 內嵌式獨立 Web App Manifest (Data URI 符合 PWA 標準) -->
     <link rel="manifest" href='data:application/manifest+json,{"name":"4歲幼兒鋼琴左右手視譜與拍子樂園","short_name":"鋼琴樂園","description":"專為4歲幼兒設計的鋼琴左右手視譜與拍子學習樂園","start_url":"./","scope":"./","id":"./","display":"standalone","orientation":"landscape","background_color":"#FFFDF9","theme_color":"#f59e0b","icons":[{"src":"https://placehold.co/192x192/f59e0b/ffffff?text=🎹","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"https://placehold.co/512x512/f59e0b/ffffff?text=🎹","sizes":"512x512","type":"image/png","purpose":"maskable any"}]}'>
 
     <title>4歲幼兒鋼琴左右手視譜與拍子樂園</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
     <style>
         body {
             font-family: 'Zen Maru Gothic', 'Fredoka', sans-serif;
@@ -66,7 +65,7 @@
             <span class="text-3xl sm:text-4xl">🎹</span>
             <div>
                 <h1 class="text-lg sm:text-2xl font-black text-amber-600 leading-tight">幼兒鋼琴視譜樂園</h1>
-                <p class="text-xs text-amber-500 font-bold hidden sm:block">擴充音域 F2 - G5 ｜ 高音譜號精細化 ｜ 節拍器與黑鍵升降音</p>
+                <p class="text-xs text-amber-500 font-bold hidden sm:block">全音域 F2 - G5 ｜ 精細標準高低音譜號 ｜ 節拍器與升降音</p>
             </div>
         </div>
 
@@ -86,7 +85,6 @@
 
         <!-- 獎勵星星數與輔助開關 -->
         <div class="flex items-center gap-2">
-            <!-- 一鍵安裝 App 按鈕 (常駐顯示並具備智能引導) -->
             <button id="installPwaBtn" onclick="installPWA()" class="px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white rounded-2xl text-xs font-bold transition flex items-center gap-1 shadow animate-pulse cursor-pointer">
                 <span>📲</span> <span>安裝 App</span>
             </button>
@@ -142,7 +140,7 @@
             <!-- 精細化標準五線譜 SVG 繪製區域 -->
             <div class="w-full max-w-xl flex justify-center items-center relative py-1">
                 <svg id="staffSVG" class="w-full h-48 sm:h-56" viewBox="0 0 360 170">
-                    <!-- 五線譜與極精細高低音譜號由 JS 動態繪製 -->
+                    <!-- 由 JavaScript 動態精確繪製 -->
                 </svg>
             </div>
 
@@ -185,13 +183,13 @@
     <footer class="max-w-6xl mx-auto w-full bg-slate-800 p-2 sm:p-3 rounded-3xl shadow-2xl border-4 border-slate-700 mt-2">
         <div class="flex justify-between items-center mb-1.5 px-2 text-white">
             <div class="text-xs sm:text-sm font-bold text-amber-300 flex items-center gap-1 overflow-x-auto">
-                <span>🎹 琴鍵音域：</span>
-                <span id="keyboardLabel">左手 [a, s, d, f, g] ｜ 右手 [h, j, k, l, ;, ', b, n, m, ,, ., /] (直接按鍵，免按 Shift！h = 中央 C4)</span>
+                <span>🎹 琴鍵單鍵快捷指引：</span>
+                <span id="keyboardLabel">左手 [1-4, a,s,d,f,g,z,x,c,v] ｜ 右手 [h,j,k,l,;,',b,n,m,,.,/] (h = 中央 C4)</span>
             </div>
-            <div class="text-xs text-slate-400 font-bold hidden md:block">支援電腦單鍵直按</div>
+            <div class="text-xs text-slate-400 font-bold hidden md:block">支援電腦直接單鍵彈奏</div>
         </div>
 
-        <!-- 鋼琴琴鍵容器 (支援橫向滑動與自動適應) -->
+        <!-- 鋼琴琴鍵容器 -->
         <div class="relative w-full h-44 sm:h-52 bg-slate-900 rounded-2xl p-2 border-2 border-slate-700 select-none overflow-x-auto piano-scroll">
             <div id="pianoWrapper" class="relative min-w-[900px] w-full h-full flex">
                 <!-- 由 JavaScript 動態計算並佈局白鍵與覆蓋黑鍵 -->
@@ -214,7 +212,7 @@
         </div>
     </div>
 
-    <!-- PWA 手動安裝教學彈窗 (當前環境無法直接觸發 prompt 時自動顯示) -->
+    <!-- PWA 手動安裝教學彈窗 -->
     <div id="pwaGuideModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 select-none">
         <div class="bg-white rounded-3xl p-5 max-w-md w-full border-4 border-emerald-400 shadow-2xl space-y-3 text-left">
             <div class="flex justify-between items-center border-b pb-2">
@@ -223,22 +221,18 @@
             </div>
             <div class="text-xs sm:text-sm text-slate-700 space-y-2">
                 <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200">
-                    <p class="font-bold text-amber-800 mb-0.5">💡 為什麼沒有直接彈出安裝提示？</p>
-                    <p class="text-[11px] text-amber-700 leading-relaxed">瀏覽器有安全限制：當前處於**預覽視窗 (iframe)** 中，Chrome 會自動封鎖強行彈窗。您可以透過以下步驟隨時手動安裝：</p>
+                    <p class="font-bold text-amber-800 mb-0.5">💡 安裝手動指引：</p>
+                    <p class="text-[11px] text-amber-700 leading-relaxed">請將網頁部署到 GitHub Pages 後，依據您的裝置隨時手動安裝：</p>
                 </div>
                 
                 <div class="space-y-1.5">
                     <div class="p-2 bg-slate-50 rounded-xl border border-slate-200">
                         <p class="font-bold text-emerald-800 text-xs">📱 Android (Google Chrome)：</p>
-                        <p class="text-[11px] text-slate-600 mt-0.5">點擊右上角 <span class="font-bold bg-slate-200 px-1 rounded text-slate-800">⋮</span> 三點選單 ➜ 選擇 **「安裝應用程式」** 或 **「加到主螢幕」**。</p>
+                        <p class="text-[11px] text-slate-600 mt-0.5">點擊右上角 <span class="font-bold bg-slate-200 px-1 rounded text-slate-800">⋮</span> 選單 ➜ 選擇 **「安裝應用程式」**。</p>
                     </div>
                     <div class="p-2 bg-slate-50 rounded-xl border border-slate-200">
                         <p class="font-bold text-blue-800 text-xs">🍎 iPhone / iPad (Safari)：</p>
-                        <p class="text-[11px] text-slate-600 mt-0.5">點擊下方 <span class="font-bold bg-slate-200 px-1 rounded text-slate-800">⎋</span> 分享按鈕 ➜ 向下滑動選擇 **「加入主畫面」**。</p>
-                    </div>
-                    <div class="p-2 bg-slate-50 rounded-xl border border-slate-200">
-                        <p class="font-bold text-purple-800 text-xs">💻 電腦版 Chrome / Edge：</p>
-                        <p class="text-[11px] text-slate-600 mt-0.5">點擊網址列右側 <span class="font-bold bg-slate-200 px-1 rounded text-slate-800">⊕</span> 圖示，或右上角選單 ➜ **「將網頁當作 App 安裝」**。</p>
+                        <p class="text-[11px] text-slate-600 mt-0.5">點擊下方 <span class="font-bold bg-slate-200 px-1 rounded text-slate-800">⎋</span> 分享按鈕 ➜ 點擊 **「加入主畫面」**。</p>
                     </div>
                 </div>
             </div>
@@ -249,81 +243,89 @@
     </div>
 
     <script>
-        /*
-         * 完整擴充樂理座標系統（SVG viewBox: 0 0 360 170）
-         * 五線譜（由下至上）：
-         * Line 5 (最頂線) Y = 40
-         * Line 4          Y = 56
-         * Line 3 (中線)   Y = 72
-         * Line 2          Y = 88  (高音譜號 G4 中心線)
-         * Line 1 (最底線) Y = 104
+        /* 
+         * 完整音符資料庫與全音域譜面座標系統
+         * 五線譜（SVG viewBox: 0 0 360 170）:
+         * topY = 40 (Line 5)
+         * Line 5: Y = 40
+         * Line 4: Y = 56
+         * Line 3: Y = 72
+         * Line 2: Y = 88  (高音譜號 G4 中心線)
+         * Line 1: Y = 104
          */
 
-        // 題目與音符資料庫 (新增 F2-B2 低音區 與 C5-G5 超高音區)
         const NOTES_DATA = {
+            // 右手高音譜號音符池 (C4 - G5)
             RH_BASIC: [
-                { id: 'C4', name: 'C', solfège: 'Do', pitch: 'C4', hand: 'RH', y: 120, isLedger: true, stemUp: true, freq: 261.63, color: '#E11D48', noteDesc: '下加一線 (中央 C)', accidental: null },
-                { id: 'D4', name: 'D', solfège: 'Re', pitch: 'D4', hand: 'RH', y: 112, isLedger: false, stemUp: true, freq: 293.66, color: '#EA580C', noteDesc: '下加一間 (第1線正下方)', accidental: null },
-                { id: 'E4', name: 'E', solfège: 'Mi', pitch: 'E4', hand: 'RH', y: 104, isLedger: false, stemUp: true, freq: 329.63, color: '#D97706', noteDesc: '第 1 線 (最底線)', accidental: null },
-                { id: 'F4', name: 'F', solfège: 'Fa', pitch: 'F4', hand: 'RH', y: 96, isLedger: false, stemUp: true, freq: 349.23, color: '#16A34A', noteDesc: '第 1 間', accidental: null },
-                { id: 'G4', name: 'G', solfège: 'Sol', pitch: 'G4', hand: 'RH', y: 88, isLedger: false, stemUp: true, freq: 392.00, color: '#0284C7', noteDesc: '第 2 線 (高音譜號中心)', accidental: null },
-                { id: 'A4', name: 'A', solfège: 'La', pitch: 'A4', hand: 'RH', y: 80, isLedger: false, stemUp: true, freq: 440.00, color: '#0D9488', noteDesc: '第 2 間', accidental: null },
-                { id: 'B4', name: 'B', solfège: 'Ti', pitch: 'B4', hand: 'RH', y: 72, isLedger: false, stemUp: false, freq: 493.88, color: '#6D28D9', noteDesc: '第 3 線 (中線)', accidental: null },
-                { id: 'C5', name: 'C', solfège: '高音 Do', pitch: 'C5', hand: 'RH', y: 64, isLedger: false, stemUp: false, freq: 523.25, color: '#E11D48', noteDesc: '第 3 間', accidental: null },
-                { id: 'D5', name: 'D', solfège: '高音 Re', pitch: 'D5', hand: 'RH', y: 56, isLedger: false, stemUp: false, freq: 587.33, color: '#EA580C', noteDesc: '第 4 線', accidental: null },
-                { id: 'E5', name: 'E', solfège: '高音 Mi', pitch: 'E5', hand: 'RH', y: 48, isLedger: false, stemUp: false, freq: 659.25, color: '#D97706', noteDesc: '第 4 間', accidental: null },
-                { id: 'F5', name: 'F', solfège: '高音 Fa', pitch: 'F5', hand: 'RH', y: 40, isLedger: false, stemUp: false, freq: 698.46, color: '#16A34A', noteDesc: '第 5 線 (最頂線)', accidental: null },
-                { id: 'G5', name: 'G', solfège: '高音 Sol', pitch: 'G5', hand: 'RH', y: 32, isLedger: false, stemUp: false, freq: 783.99, color: '#0284C7', noteDesc: '上加一間', accidental: null }
+                { id: 'C4', name: 'C', solfège: 'Do', pitch: 'C4', hand: 'RH', y: 120, isLedger: true, stemUp: true, freq: 261.63, color: '#E11D48', noteDesc: '下加一線 (中央 C4)', accidental: null },
+                { id: 'D4', name: 'D', solfège: 'Re', pitch: 'D4', hand: 'RH', y: 112, isLedger: false, stemUp: true, freq: 293.66, color: '#EA580C', noteDesc: '下加一間 (D4)', accidental: null },
+                { id: 'E4', name: 'E', solfège: 'Mi', pitch: 'E4', hand: 'RH', y: 104, isLedger: false, stemUp: true, freq: 329.63, color: '#D97706', noteDesc: '第 1 線 (E4)', accidental: null },
+                { id: 'F4', name: 'F', solfège: 'Fa', pitch: 'F4', hand: 'RH', y: 96, isLedger: false, stemUp: true, freq: 349.23, color: '#16A34A', noteDesc: '第 1 間 (F4)', accidental: null },
+                { id: 'G4', name: 'G', solfège: 'Sol', pitch: 'G4', hand: 'RH', y: 88, isLedger: false, stemUp: true, freq: 392.00, color: '#0284C7', noteDesc: '第 2 線 (高音 G4)', accidental: null },
+                { id: 'A4', name: 'A', solfège: 'La', pitch: 'A4', hand: 'RH', y: 80, isLedger: false, stemUp: true, freq: 440.00, color: '#2563EB', noteDesc: '第 2 間 (A4)', accidental: null },
+                { id: 'B4', name: 'B', solfège: 'Ti', pitch: 'B4', hand: 'RH', y: 72, isLedger: false, stemUp: false, freq: 493.88, color: '#7C3AED', noteDesc: '第 3 線 (B4)', accidental: null },
+                { id: 'C5', name: 'C', solfège: 'Do', pitch: 'C5', hand: 'RH', y: 64, isLedger: false, stemUp: false, freq: 523.25, color: '#DB2777', noteDesc: '第 3 間 (高音 C5)', accidental: null },
+                { id: 'D5', name: 'D', solfège: 'Re', pitch: 'D5', hand: 'RH', y: 56, isLedger: false, stemUp: false, freq: 587.33, color: '#EA580C', noteDesc: '第 4 線 (D5)', accidental: null },
+                { id: 'E5', name: 'E', solfège: 'Mi', pitch: 'E5', hand: 'RH', y: 48, isLedger: false, stemUp: false, freq: 659.25, color: '#D97706', noteDesc: '第 4 間 (E5)', accidental: null },
+                { id: 'F5', name: 'F', solfège: 'Fa', pitch: 'F5', hand: 'RH', y: 40, isLedger: false, stemUp: false, freq: 698.46, color: '#16A34A', noteDesc: '第 5 線 (F5)', accidental: null },
+                { id: 'G5', name: 'G', solfège: 'Sol', pitch: 'G5', hand: 'RH', y: 32, isLedger: false, stemUp: false, freq: 783.99, color: '#0284C7', noteDesc: '第 5 線上方 (G5)', accidental: null }
             ],
             RH_ACCIDENTALS: [
-                { id: 'Cs4', name: 'C#', solfège: '升 Do', pitch: 'C#4', hand: 'RH', y: 120, isLedger: true, stemUp: true, freq: 277.18, color: '#9333EA', noteDesc: '升 C (黑鍵)', accidental: '♯' },
-                { id: 'Ds4', name: 'D#', solfège: '升 Re', pitch: 'D#4', hand: 'RH', y: 112, isLedger: false, stemUp: true, freq: 311.13, color: '#9333EA', noteDesc: '升 D (黑鍵)', accidental: '♯' },
-                { id: 'Fs4', name: 'F#', solfège: '升 Fa', pitch: 'F#4', hand: 'RH', y: 96, isLedger: false, stemUp: true, freq: 369.99, color: '#9333EA', noteDesc: '升 F (黑鍵)', accidental: '♯' },
-                { id: 'Gs4', name: 'G#', solfège: '升 Sol', pitch: 'G#4', hand: 'RH', y: 88, isLedger: false, stemUp: true, freq: 415.30, color: '#9333EA', noteDesc: '升 G (黑鍵)', accidental: '♯' },
-                { id: 'Bb4', name: 'Bb', solfège: '降 Ti', pitch: 'A#4', hand: 'RH', y: 72, isLedger: false, stemUp: false, freq: 466.16, color: '#9333EA', noteDesc: '降 B (黑鍵)', accidental: '♭' },
-                { id: 'Cs5', name: 'C#', solfège: '高音 升 Do', pitch: 'C#5', hand: 'RH', y: 64, isLedger: false, stemUp: false, freq: 554.37, color: '#9333EA', noteDesc: '高音 升 C (黑鍵)', accidental: '♯' },
-                { id: 'Ds5', name: 'D#', solfège: '高音 升 Re', pitch: 'D#5', hand: 'RH', y: 56, isLedger: false, stemUp: false, freq: 622.25, color: '#9333EA', noteDesc: '高音 升 D (黑鍵)', accidental: '♯' },
-                { id: 'Fs5', name: 'F#', solfège: '高音 升 Fa', pitch: 'F#5', hand: 'RH', y: 40, isLedger: false, stemUp: false, freq: 739.99, color: '#9333EA', noteDesc: '高音 升 F (黑鍵)', accidental: '♯' }
+                { id: 'Cs4', name: 'C#', solfège: '升 Do', pitch: 'C#4', hand: 'RH', y: 120, isLedger: true, stemUp: true, freq: 277.18, color: '#9333EA', noteDesc: '升 C4 (黑鍵)', accidental: '♯' },
+                { id: 'Ds4', name: 'D#', solfège: '升 Re', pitch: 'D#4', hand: 'RH', y: 112, isLedger: false, stemUp: true, freq: 311.13, color: '#9333EA', noteDesc: '升 D4 (黑鍵)', accidental: '♯' },
+                { id: 'Fs4', name: 'F#', solfège: '升 Fa', pitch: 'F#4', hand: 'RH', y: 96, isLedger: false, stemUp: true, freq: 369.99, color: '#9333EA', noteDesc: '升 F4 (黑鍵)', accidental: '♯' },
+                { id: 'Gs4', name: 'G#', solfège: '升 Sol', pitch: 'G#4', hand: 'RH', y: 88, isLedger: false, stemUp: true, freq: 415.30, color: '#9333EA', noteDesc: '升 G4 (黑鍵)', accidental: '♯' },
+                { id: 'Bb4', name: 'Bb', solfège: '降 Ti', pitch: 'A#4', hand: 'RH', y: 80, isLedger: false, stemUp: true, freq: 466.16, color: '#9333EA', noteDesc: '降 B4 (黑鍵)', accidental: '♭' },
+                { id: 'Cs5', name: 'C#', solfège: '升 Do', pitch: 'C#5', hand: 'RH', y: 64, isLedger: false, stemUp: false, freq: 554.37, color: '#9333EA', noteDesc: '升 C5 (黑鍵)', accidental: '♯' },
+                { id: 'Ds5', name: 'D#', solfège: '升 Re', pitch: 'D#5', hand: 'RH', y: 56, isLedger: false, stemUp: false, freq: 622.25, color: '#9333EA', noteDesc: '升 D5 (黑鍵)', accidental: '♯' },
+                { id: 'Fs5', name: 'F#', solfège: '升 Fa', pitch: 'F#5', hand: 'RH', y: 40, isLedger: false, stemUp: false, freq: 739.99, color: '#9333EA', noteDesc: '升 F5 (黑鍵)', accidental: '♯' }
             ],
+
+            // 左手低音譜號音符池 (F2 - B3)
             LH_BASIC: [
-                { id: 'F2', name: 'F', solfège: '低音 Fa', pitch: 'F2', hand: 'LH', y: 112, isLedger: false, stemUp: true, freq: 87.31, color: '#2563EB', noteDesc: '下加一間', accidental: null },
-                { id: 'G2', name: 'G', solfège: '低音 Sol', pitch: 'G2', hand: 'LH', y: 104, isLedger: false, stemUp: true, freq: 98.00, color: '#4F46E5', noteDesc: '第 1 線 (最底線)', accidental: null },
-                { id: 'A2', name: 'A', solfège: '低音 La', pitch: 'A2', hand: 'LH', y: 96, isLedger: false, stemUp: true, freq: 110.00, color: '#0D9488', noteDesc: '第 1 間', accidental: null },
-                { id: 'B2', name: 'B', solfège: '低音 Ti', pitch: 'B2', hand: 'LH', y: 88, isLedger: false, stemUp: true, freq: 123.47, color: '#6D28D9', noteDesc: '第 2 線', accidental: null },
-                { id: 'C3', name: 'C', solfège: 'Do', pitch: 'C3', hand: 'LH', y: 80, isLedger: false, stemUp: true, freq: 130.81, color: '#2563EB', noteDesc: '第 2 間 (低音 Do)', accidental: null },
-                { id: 'D3', name: 'D', solfège: 'Re', pitch: 'D3', hand: 'LH', y: 72, isLedger: false, stemUp: true, freq: 146.83, color: '#4F46E5', noteDesc: '第 3 線 (中線)', accidental: null },
-                { id: 'E3', name: 'E', solfège: 'Mi', pitch: 'E3', hand: 'LH', y: 64, isLedger: false, stemUp: false, freq: 164.81, color: '#7C3AED', noteDesc: '第 3 間', accidental: null },
-                { id: 'F3', name: 'F', solfège: 'Fa', pitch: 'F3', hand: 'LH', y: 56, isLedger: false, stemUp: false, freq: 174.61, color: '#DB2777', noteDesc: '第 4 線 (低音譜號夾線)', accidental: null },
-                { id: 'G3', name: 'G', solfège: 'Sol', pitch: 'G3', hand: 'LH', y: 48, isLedger: false, stemUp: false, freq: 196.00, color: '#DC2626', noteDesc: '第 4 間', accidental: null },
-                { id: 'A3', name: 'A', solfège: 'La', pitch: 'A3', hand: 'LH', y: 40, isLedger: false, stemUp: false, freq: 220.00, color: '#059669', noteDesc: '第 5 線 (最頂線)', accidental: null },
-                { id: 'B3', name: 'B', solfège: 'Ti', pitch: 'B3', hand: 'LH', y: 32, isLedger: false, stemUp: false, freq: 246.94, color: '#4338CA', noteDesc: '上加一間', accidental: null }
+                { id: 'F2', name: 'F', solfège: 'Fa', pitch: 'F2', hand: 'LH', y: 112, isLedger: false, stemUp: true, freq: 87.31, color: '#1D4ED8', noteDesc: '第 1 線下方 (低音 Fa)', accidental: null },
+                { id: 'G2', name: 'G', solfège: 'Sol', pitch: 'G2', hand: 'LH', y: 104, isLedger: false, stemUp: true, freq: 98.00, color: '#1D4ED8', noteDesc: '第 1 線 (低音 Sol)', accidental: null },
+                { id: 'A2', name: 'A', solfège: 'La', pitch: 'A2', hand: 'LH', y: 96, isLedger: false, stemUp: true, freq: 110.00, color: '#1D4ED8', noteDesc: '第 1 間 (低音 La)', accidental: null },
+                { id: 'B2', name: 'B', solfège: 'Ti', pitch: 'B2', hand: 'LH', y: 88, isLedger: false, stemUp: true, freq: 123.47, color: '#1D4ED8', noteDesc: '第 2 線 (低音 Ti)', accidental: null },
+                { id: 'C3', name: 'C', solfège: 'Do', pitch: 'C3', hand: 'LH', y: 80, isLedger: false, stemUp: true, freq: 130.81, color: '#0284C7', noteDesc: '第 2 間 (低音 Do)', accidental: null },
+                { id: 'D3', name: 'D', solfège: 'Re', pitch: 'D3', hand: 'LH', y: 72, isLedger: false, stemUp: true, freq: 146.83, color: '#0284C7', noteDesc: '第 3 線 (低音 Re)', accidental: null },
+                { id: 'E3', name: 'E', solfège: 'Mi', pitch: 'E3', hand: 'LH', y: 64, isLedger: false, stemUp: false, freq: 164.81, color: '#0284C7', noteDesc: '第 3 間 (低音 Mi)', accidental: null },
+                { id: 'F3', name: 'F', solfège: 'Fa', pitch: 'F3', hand: 'LH', y: 56, isLedger: false, stemUp: false, freq: 174.61, color: '#0284C7', noteDesc: '第 4 線 (低音 F3線)', accidental: null },
+                { id: 'G3', name: 'G', solfège: 'Sol', pitch: 'G3', hand: 'LH', y: 48, isLedger: false, stemUp: false, freq: 196.00, color: '#0284C7', noteDesc: '第 4 間 (低音 Sol)', accidental: null },
+                { id: 'A3', name: 'A', solfège: 'La', pitch: 'A3', hand: 'LH', y: 40, isLedger: false, stemUp: false, freq: 220.00, color: '#0284C7', noteDesc: '第 5 線 (低音 La)', accidental: null },
+                { id: 'B3', name: 'B', solfège: 'Ti', pitch: 'B3', hand: 'LH', y: 32, isLedger: false, stemUp: false, freq: 246.94, color: '#0284C7', noteDesc: '第 5 線上方 (低音 Ti)', accidental: null }
             ],
             LH_ACCIDENTALS: [
-                { id: 'Fs2', name: 'F#', solfège: '低音 升 Fa', pitch: 'F#2', hand: 'LH', y: 112, isLedger: false, stemUp: true, freq: 92.50, color: '#9333EA', noteDesc: '低音 升 F (黑鍵)', accidental: '♯' },
-                { id: 'Gs2', name: 'G#', solfège: '低音 升 Sol', pitch: 'G#2', hand: 'LH', y: 104, isLedger: false, stemUp: true, freq: 103.83, color: '#9333EA', noteDesc: '低音 升 G (黑鍵)', accidental: '♯' },
-                { id: 'Bb2', name: 'Bb', solfège: '低音 降 Ti', pitch: 'A#2', hand: 'LH', y: 96, isLedger: false, stemUp: true, freq: 116.54, color: '#9333EA', noteDesc: '低音 降 B (黑鍵)', accidental: '♭' },
-                { id: 'Cs3', name: 'C#', solfège: '升 Do', pitch: 'C#3', hand: 'LH', y: 80, isLedger: false, stemUp: true, freq: 138.59, color: '#9333EA', noteDesc: '低音 升 C (黑鍵)', accidental: '♯' },
-                { id: 'Ds3', name: 'D#', solfège: '升 Re', pitch: 'D#3', hand: 'LH', y: 72, isLedger: false, stemUp: true, freq: 155.56, color: '#9333EA', noteDesc: '低音 升 Re (黑鍵)', accidental: '♯' },
-                { id: 'Fs3', name: 'F#', solfège: '升 Fa', pitch: 'F#3', hand: 'LH', y: 56, isLedger: false, stemUp: false, freq: 185.00, color: '#9333EA', noteDesc: '低音 升 F (黑鍵)', accidental: '♯' },
-                { id: 'Gs3', name: 'G#', solfège: '升 Sol', pitch: 'G#3', hand: 'LH', y: 48, isLedger: false, stemUp: false, freq: 207.65, color: '#9333EA', noteDesc: '低音 升 G (黑鍵)', accidental: '♯' },
-                { id: 'Bb3', name: 'Bb', solfège: '降 Ti', pitch: 'A#3', hand: 'LH', y: 32, isLedger: false, stemUp: false, freq: 233.08, color: '#9333EA', noteDesc: '低音 降 B (黑鍵)', accidental: '♭' }
+                { id: 'Fs2', name: 'F#', solfège: '升 Fa', pitch: 'F#2', hand: 'LH', y: 112, isLedger: false, stemUp: true, freq: 92.50, color: '#9333EA', noteDesc: '低音 升 F2 (黑鍵)', accidental: '♯' },
+                { id: 'Gs2', name: 'G#', solfège: '升 Sol', pitch: 'G#2', hand: 'LH', y: 104, isLedger: false, stemUp: true, freq: 103.83, color: '#9333EA', noteDesc: '低音 升 G2 (黑鍵)', accidental: '♯' },
+                { id: 'Bb2', name: 'Bb', solfège: '降 Ti', pitch: 'A#2', hand: 'LH', y: 96, isLedger: false, stemUp: true, freq: 116.54, color: '#9333EA', noteDesc: '低音 降 B2 (黑鍵)', accidental: '♭' },
+                { id: 'Cs3', name: 'C#', solfège: '升 Do', pitch: 'C#3', hand: 'LH', y: 80, isLedger: false, stemUp: true, freq: 138.59, color: '#9333EA', noteDesc: '低音 升 C3 (黑鍵)', accidental: '♯' },
+                { id: 'Ds3', name: 'D#', solfège: '升 Re', pitch: 'D#3', hand: 'LH', y: 72, isLedger: false, stemUp: true, freq: 155.56, color: '#9333EA', noteDesc: '低音 升 D3 (黑鍵)', accidental: '♯' },
+                { id: 'Fs3', name: 'F#', solfège: '升 Fa', pitch: 'F#3', hand: 'LH', y: 56, isLedger: false, stemUp: false, freq: 185.00, color: '#9333EA', noteDesc: '低音 升 F3 (黑鍵)', accidental: '♯' },
+                { id: 'Gs3', name: 'G#', solfège: '升 Sol', pitch: 'G#3', hand: 'LH', y: 48, isLedger: false, stemUp: false, freq: 207.65, color: '#9333EA', noteDesc: '低音 升 G3 (c 鍵)', accidental: '♯' },
+                { id: 'Bb3', name: 'Bb', solfège: '降 Ti', pitch: 'A#3', hand: 'LH', y: 40, isLedger: false, stemUp: false, freq: 233.08, color: '#9333EA', noteDesc: '低音 降 B3 (黑鍵)', accidental: '♭' }
             ]
         };
 
-        // 全音域 (F2 至 G5) 自由彈奏對照表
+        // 自動建立快速 Pitch 尋找對應表
         const ALL_NOTES_MAP = {};
-        [...NOTES_DATA.RH_BASIC, ...NOTES_DATA.RH_ACCIDENTALS, ...NOTES_DATA.LH_BASIC, ...NOTES_DATA.LH_ACCIDENTALS].forEach(n => {
+        [
+            ...NOTES_DATA.RH_BASIC,
+            ...NOTES_DATA.RH_ACCIDENTALS,
+            ...NOTES_DATA.LH_BASIC,
+            ...NOTES_DATA.LH_ACCIDENTALS
+        ].forEach(n => {
             ALL_NOTES_MAP[n.pitch] = n;
         });
 
         // 拍子資料庫
         const RHYTHM_DATA = [
-            { name: '四分音符', beat: 1, symbol: '♩', nameCn: '1 拍 (嗒)', desc: '跟著 60 BPM 節拍器點擊 1 次，唸「嗒」！', claps: ['👏'], targetTaps: 1 },
-            { name: '二分音符', beat: 2, symbol: '𝄩', nameCn: '2 拍 (嗒-啊)', desc: '聽著 2 聲節拍器點擊 2 次，唸「嗒-啊」！', claps: ['👏', '👏'], targetTaps: 2 },
+            { name: '四分音符', beat: 1, symbol: '♩', nameCn: '1 拍 (嗒)', desc: '聽著節拍器點擊 1 次，唸作「嗒」！', claps: ['👏'], targetTaps: 1 },
+            { name: '二分音符', beat: 2, symbol: '𝄩', nameCn: '2 拍 (嗒-啊)', desc: '聽著 2 聲節拍器點擊 2 次，唸作「嗒-啊」！', claps: ['👏', '👏'], targetTaps: 2 },
             { name: '全音符', beat: 4, symbol: '𝄮', nameCn: '4 拍 (嗒-啊-啊-啊)', desc: '聽著 4 聲節拍器點擊 4 次，連續穩定打 4 下！', claps: ['👏', '👏', '👏', '👏'], targetTaps: 4 }
         ];
 
-        let currentMode = 'RH'; // 'RH', 'LH', 'Rhythm', 'Free'
+        let currentMode = 'RH'; 
         let currentNote = null;
         let currentRhythmIndex = 0;
         let currentRhythmTapCount = 0;
@@ -335,6 +337,8 @@
         let isMetronomeOn = false;
         let metronomeTimer = null;
         let audioCtx = null;
+        let masterGainNode = null;
+        let compressorNode = null;
 
         function initAudio() {
             if (!audioCtx) {
@@ -343,30 +347,83 @@
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
+
+            if (!masterGainNode && audioCtx) {
+                masterGainNode = audioCtx.createGain();
+                masterGainNode.gain.setValueAtTime(0.45, audioCtx.currentTime);
+
+                compressorNode = audioCtx.createDynamicsCompressor();
+                compressorNode.threshold.setValueAtTime(-18, audioCtx.currentTime);
+                compressorNode.knee.setValueAtTime(24, audioCtx.currentTime);
+                compressorNode.ratio.setValueAtTime(10, audioCtx.currentTime);
+                compressorNode.attack.setValueAtTime(0.003, audioCtx.currentTime);
+                compressorNode.release.setValueAtTime(0.2, audioCtx.currentTime);
+
+                masterGainNode.connect(compressorNode);
+                compressorNode.connect(audioCtx.destination);
+            }
         }
 
-        function playTone(freq, duration = 1.0) {
+        // 多重泛音鋼琴合成器 (消除點擊爆音與殘音)
+        function playTone(freq, duration = 1.2) {
             initAudio();
             if (!audioCtx) return;
 
             try {
-                const osc = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
+                const now = audioCtx.currentTime;
 
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                const startCutoff = Math.min(12000, freq * 7.5);
+                const endCutoff = Math.min(2500, freq * 1.5);
+                filter.frequency.setValueAtTime(startCutoff, now);
+                filter.frequency.exponentialRampToValueAtTime(Math.max(120, endCutoff), now + duration * 0.7);
 
-                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-                gainNode.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 0.02);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                const noteGain = audioCtx.createGain();
+                noteGain.gain.setValueAtTime(0.0001, now);
+                noteGain.gain.exponentialRampToValueAtTime(0.65, now + 0.008); 
+                noteGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
-                osc.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
+                const harmonics = [
+                    { mult: 1.0, gain: 0.65, type: 'sine' },      
+                    { mult: 2.0, gain: 0.22, type: 'sine' },      
+                    { mult: 3.0, gain: 0.08, type: 'triangle' },  
+                    { mult: 4.0, gain: 0.03, type: 'sine' }       
+                ];
 
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
+                const activeOscillators = [];
+
+                harmonics.forEach(h => {
+                    const osc = audioCtx.createOscillator();
+                    const hGain = audioCtx.createGain();
+
+                    osc.type = h.type;
+                    osc.frequency.setValueAtTime(freq * h.mult, now);
+                    hGain.gain.setValueAtTime(h.gain, now);
+
+                    osc.connect(hGain);
+                    hGain.connect(filter);
+
+                    osc.start(now);
+                    osc.stop(now + duration + 0.05);
+                    activeOscillators.push(osc);
+                });
+
+                filter.connect(noteGain);
+                noteGain.connect(masterGainNode);
+
+                setTimeout(() => {
+                    activeOscillators.forEach(osc => {
+                        try { osc.disconnect(); } catch(e){}
+                    });
+                    try {
+                        filter.disconnect();
+                        noteGain.disconnect();
+                    } catch(e){}
+                }, (duration + 0.1) * 1000);
+
             } catch(e) {
-                console.error("Audio error:", e);
+                console.error("Piano Synth Error:", e);
             }
         }
 
@@ -375,21 +432,22 @@
             if (!audioCtx) return;
 
             try {
+                const now = audioCtx.currentTime;
                 const osc = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
 
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(isHigh ? 1200 : 800, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.04);
+                osc.frequency.setValueAtTime(isHigh ? 1200 : 800, now);
+                osc.frequency.exponentialRampToValueAtTime(120, now + 0.035);
 
-                gainNode.gain.setValueAtTime(0.7, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
 
                 osc.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
+                gainNode.connect(masterGainNode || audioCtx.destination);
 
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.04);
+                osc.start(now);
+                osc.stop(now + 0.035);
 
                 const ind = document.getElementById('metroIndicator');
                 if (ind) {
@@ -482,7 +540,7 @@
             }
         }
 
-        // 精細繪製標準五線譜與精緻高音/低音譜號
+        // 繪製五線譜與標準高/低音譜號
         function drawStaff(note) {
             const svg = document.getElementById('staffSVG');
             if (!svg) return;
@@ -510,18 +568,16 @@
             html += `<line x1="335" y1="${topY}" x2="335" y2="${topY + 64}" stroke="#475569" stroke-width="2.5"/>`;
 
             if (isRH) {
-                // 精緻雕琢的高音譜號 (Treble Clef / G Clef)：標準古典線條，螺旋對齊第2線 (Y=88)
+                // 精緻高音譜號 (Treble Clef / G Clef)：對齊第 2 線 (Y=88)
                 html += `
                     <g transform="translate(42, 88)" class="select-none pointer-events-none">
-                        <!-- 高音譜號標準幾何向量繪製 -->
                         <path d="M 1,-64 C 1,-64 -2,-78 -10,-72 C -18,-66 -11,-50 1,-34 C 15,-18 19,6 -1,18 C -20,28 -26,8 -15,-6 C -6,-18 13,-14 13,0 C 13,14 -2,18 -9,11 C -14,6 -12,0 -6,-1 C -2,-2 3,2 2,7 C 1,12 -5,11 -7,8 C -9,5 -6,2 -3,2 C 1,2 3,12 -8,14 C -18,16 -20,-1 -11,-12 C -2,-23 15,-18 15,-1 C 15,18 -4,22 -17,13 C -28,5 -20,-16 -10,-28 L -1,-60 L -1,42 C -1,56 -12,56 -12,47 C -12,40 -4,40 -4,45 C -4,50 -9,52 -11,49 C -13,46 -10,43 -6,44" 
                               fill="none" stroke="#E11D48" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
-                        <!-- 高音譜號實心底圈與螺旋心點 -->
                         <circle cx="-1" cy="0" r="3.2" fill="#E11D48" />
                     </g>
                 `;
             } else {
-                // 低音譜號 (Bass Clef / F Clef)：起筆圓點對齊第4線 (Y=56)
+                // 低音譜號 (Bass Clef / F Clef)：起筆點對齊第 4 線 (Y=56)
                 html += `
                     <g class="select-none pointer-events-none">
                         <circle cx="50" cy="56" r="5.5" fill="#0284C7" />
@@ -577,10 +633,9 @@
             svg.innerHTML = html;
         }
 
-        // 擴充鋼琴結構 (F2 至 G5，共 23 白鍵 + 16 黑鍵)
         // 擴充鋼琴結構 (F2 至 G5，共 23 白鍵 + 16 黑鍵，全面採用單鍵對應)
         const FULL_PIANO_STRUCTURE = [
-            // F2 - B2 (低音擴充區)
+            // F2 - B2 (低音擴充區: 1234, qwe)
             { type: 'white', pitch: 'F2', solfège: 'Fa', hand: 'LH', isMiddleC: false, keyChar: '1' },
             { type: 'black', pitch: 'F#2', solfège: '升Fa', hand: 'LH', whiteIndex: 0, keyChar: 'q' },
             { type: 'white', pitch: 'G2', solfège: 'Sol', hand: 'LH', isMiddleC: false, keyChar: '2' },
@@ -589,7 +644,7 @@
             { type: 'black', pitch: 'A#2', solfège: '降Ti', hand: 'LH', whiteIndex: 2, keyChar: 'e' },
             { type: 'white', pitch: 'B2', solfège: 'Ti', hand: 'LH', isMiddleC: false, keyChar: '4' },
 
-            // C3 - B3 (左手主區: asdfgzxc)
+            // C3 - B3 (左手主區: asdfgzxc, rtycv)
             { type: 'white', pitch: 'C3', solfège: 'Do', hand: 'LH', isMiddleC: false, keyChar: 'a' },
             { type: 'black', pitch: 'C#3', solfège: '升Do', hand: 'LH', whiteIndex: 4, keyChar: 'r' },
             { type: 'white', pitch: 'D3', solfège: 'Re', hand: 'LH', isMiddleC: false, keyChar: 's' },
@@ -603,7 +658,7 @@
             { type: 'black', pitch: 'A#3', solfège: '降Ti', hand: 'LH', whiteIndex: 9, keyChar: 'v' },
             { type: 'white', pitch: 'B3', solfège: 'Ti', hand: 'LH', isMiddleC: false, keyChar: 'x' },
 
-            // C4 - B4 (右手高音主區: H = Middle C, hjkl;'b)
+            // C4 - B4 (右手高音主區: H = Middle C, hjkl;'b, uiop[)
             { type: 'white', pitch: 'C4', solfège: 'Do', hand: 'RH', isMiddleC: true, keyChar: 'h' },
             { type: 'black', pitch: 'C#4', solfège: '升Do', hand: 'RH', whiteIndex: 11, keyChar: 'u' },
             { type: 'white', pitch: 'D4', solfège: 'Re', hand: 'RH', isMiddleC: false, keyChar: 'j' },
@@ -617,7 +672,7 @@
             { type: 'black', pitch: 'A#4', solfège: '降Ti', hand: 'RH', whiteIndex: 16, keyChar: '[' },
             { type: 'white', pitch: 'B4', solfège: 'Ti', hand: 'RH', isMiddleC: false, keyChar: 'b' },
 
-            // C5 - G5 (高音擴充區: n,m,./)
+            // C5 - G5 (高音擴充區: nm,./ , 567)
             { type: 'white', pitch: 'C5', solfège: 'Do', hand: 'RH', isMiddleC: false, keyChar: 'n' },
             { type: 'black', pitch: 'C#5', solfège: '升Do', hand: 'RH', whiteIndex: 18, keyChar: '5' },
             { type: 'white', pitch: 'D5', solfège: 'Re', hand: 'RH', isMiddleC: false, keyChar: 'm' },
@@ -635,13 +690,11 @@
             }
         });
 
-        // 符號與 Shift 鍵自動映射（確保不論是否按住 Shift 或 CapsLock，皆能直接出音）
         const SHIFT_KEY_MAP = {
             '!': '1', '@': '2', '#': '3', '$': '4', '%': '5', '^': '6', '&': '7',
             ':': ';', '"': '\'', '<': ',', '>': '.', '?': '/', '{': '['
         };
 
-        // 動態精確佈局白鍵與黑鍵 (23 個白鍵，均分 100% 寬度)
         function renderPianoKeyboard() {
             const wrapper = document.getElementById('pianoWrapper');
             if (!wrapper) return;
@@ -653,11 +706,10 @@
             const totalWhite = whiteKeys.length; // 23
             const whiteWidthPercent = 100 / totalWhite; // ~4.3478%
 
-            // 1. 渲染白鍵
             const whiteContainer = document.createElement('div');
             whiteContainer.className = 'w-full h-full flex z-10';
 
-            whiteKeys.forEach((keyData, idx) => {
+            whiteKeys.forEach((keyData) => {
                 const isRH = keyData.hand === 'RH';
                 const baseBorder = isRH ? 'border-t-6 sm:border-t-8 border-rose-400' : 'border-t-6 sm:border-t-8 border-sky-400';
                 const bg = keyData.isMiddleC ? 'bg-amber-100 ring-2 ring-amber-400' : 'bg-white';
@@ -693,14 +745,11 @@
 
             wrapper.appendChild(whiteContainer);
 
-            // 2. 動態精確計算黑鍵左側偏移量 (對齊白鍵縫隙)
             blackKeys.forEach((keyData) => {
                 const isRH = keyData.hand === 'RH';
                 const blackBtn = document.createElement('button');
                 
-                // 黑鍵寬度約為白鍵寬度的 65%
                 const blackWidthPercent = whiteWidthPercent * 0.65; 
-                // 置於 whiteIndex 與 whiteIndex+1 之間
                 const leftPosPercent = ((keyData.whiteIndex + 1) * whiteWidthPercent) - (blackWidthPercent / 2);
 
                 blackBtn.style.left = `${leftPosPercent}%`;
@@ -737,7 +786,7 @@
             key = key.toLowerCase();
             const pitch = KEY_CHAR_TO_PITCH[key];
             if (pitch) {
-                e.preventDefault(); // 阻擋瀏覽器預設快捷鍵 (例如 / 或 ' 搜尋)
+                e.preventDefault(); 
                 const btn = document.querySelector(`[data-pitch="${pitch}"]`);
                 if (btn) {
                     if (btn.classList.contains('piano-white-key')) {
@@ -983,12 +1032,11 @@
         }
 
         function closeCelebration() {
-            document.getElementById('celebrationModal').classList.hidden = true;
+            document.getElementById('celebrationModal').classList.add('hidden');
         }
 
-        /* ----- PWA 安裝與智能引導邏輯 ----- */
+        /* PWA 安裝與導引 */
         let deferredPrompt = null;
-
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
@@ -997,12 +1045,7 @@
         function installPWA() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User installed PWA');
-                    }
-                    deferredPrompt = null;
-                });
+                deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
             } else {
                 showPwaGuide();
             }
@@ -1018,54 +1061,19 @@
             if (modal) modal.classList.add('hidden');
         }
 
-        // 內嵌式 Service Worker 自動構建與註冊 (免額外 sw.js 實體檔案，PWABuilder 可完整偵測)
+        // ServiceWorker 自動註冊
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 try {
                     const swCode = `
-                        const CACHE_NAME = 'piano-app-v2';
-                        const ASSETS = ['./', 'index.html'];
-
-                        self.addEventListener('install', (e) => {
-                            self.skipWaiting();
-                            e.waitUntil(
-                                caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)).catch(() => {})
-                            );
-                        });
-
-                        self.addEventListener('activate', (e) => {
-                            e.waitUntil(
-                                caches.keys().then((keys) => 
-                                    Promise.all(keys.map((k) => k !== CACHE_NAME && caches.delete(k)))
-                                ).then(() => self.clients.claim())
-                            );
-                        });
-
-                        self.addEventListener('fetch', (e) => {
-                            e.respondWith(
-                                caches.match(e.request).then((cachedResponse) => {
-                                    if (cachedResponse) return cachedResponse;
-                                    return fetch(e.request).then((networkResponse) => {
-                                        return networkResponse;
-                                    }).catch(() => caches.match('./') || caches.match('index.html'));
-                                })
-                            );
-                        });
+                        const CACHE_NAME = 'piano-app-v3';
+                        self.addEventListener('install', (e) => { self.skipWaiting(); });
+                        self.addEventListener('activate', (e) => { self.clients.claim(); });
+                        self.addEventListener('fetch', (e) => { e.respondWith(fetch(e.request).catch(() => caches.match(e.request))); });
                     `;
-
                     const blob = new Blob([swCode], { type: 'application/javascript' });
-                    const swUrl = URL.createObjectURL(blob);
-
-                    navigator.serviceWorker.register(swUrl, { scope: './' })
-                        .then(function(reg) {
-                            console.log('PWA ServiceWorker registered successfully via Blob URL:', reg.scope);
-                        })
-                        .catch(function(err) {
-                            console.log('PWA ServiceWorker registration note:', err);
-                        });
-                } catch (e) {
-                    console.log('PWA ServiceWorker initialization note:', e);
-                }
+                    navigator.serviceWorker.register(URL.createObjectURL(blob), { scope: './' }).catch(() => {});
+                } catch (e) {}
             });
         }
 
